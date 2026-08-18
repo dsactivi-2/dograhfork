@@ -56,6 +56,9 @@
     .panel { display: none; }
     .panel.active { display: grid; gap: 16px; }
     .flash { font-size: 13px; color: var(--eu); min-height: 1.2em; }
+    details.model { border-top: 1px solid var(--line); padding: 10px 0; }
+    details.model summary { cursor: pointer; font-weight: 600; }
+    .bool-t { color: var(--ok); } .bool-f { color: var(--bad); }
     @media (max-width: 860px) {
       .pulse, .grid { grid-template-columns: 1fr; }
       header, main, nav { padding-left: 16px; padding-right: 16px; }
@@ -71,6 +74,7 @@
   <nav>
     <button type="button" data-tab="status" aria-selected="true">Status</button>
     <button type="button" data-tab="config">Config</button>
+    <button type="button" data-tab="models">Modelle</button>
     <button type="button" data-tab="history">History</button>
     <button type="button" data-tab="agents">MCP / Skills</button>
   </nav>
@@ -125,6 +129,15 @@
           <label>Step2Job URL<input id="s2j_url" /></label>
           <label>Agents URL<input id="agents_url" /></label>
         </div>
+        <label style="margin-top:12px">LLM Provider<input id="llm_provider" /></label>
+        <div class="grid">
+          <label>LLM Modell<input id="llm_model" /></label>
+          <label>Temperature (leer = Feld existiert nicht / unset)<input id="llm_temp" placeholder="z.B. 0.7 — OpenAI-Schema hat keins" /></label>
+        </div>
+        <label style="margin-top:12px">Agent Systemprompt<textarea id="prompt_agent" placeholder="leer = nicht gesetzt (false)"></textarea></label>
+        <label>Start-Call Prompt<textarea id="prompt_start"></textarea></label>
+        <label>End-Call Prompt<textarea id="prompt_end"></textarea></label>
+        <label>QA Systemprompt<textarea id="prompt_qa"></textarea></label>
         <label style="margin-top:12px">Notizen<textarea id="notes"></textarea></label>
         <div class="actions">
           <button type="button" id="save">Config speichern</button>
@@ -135,6 +148,32 @@
       <section class="card">
         <h2>Agent-JSON aus dieser Config</h2>
         <pre id="combo">…</pre>
+      </section>
+    </section>
+
+    <section id="models" class="panel">
+      <section class="card">
+        <h2>Jedes Feld, auch false</h2>
+        <p class="lede" style="margin-top:0">Aus registry.py + Overlay-Schemas. Wrapper, Temperature, Factory-Flags. Nichts wird weggelassen, nur weil es aus ist.</p>
+        <div class="actions">
+          <select id="kind-filter">
+            <option value="all">alle Arten</option>
+            <option value="llm">llm</option>
+            <option value="stt">stt</option>
+            <option value="tts">tts</option>
+            <option value="realtime">realtime</option>
+            <option value="embeddings">embeddings</option>
+          </select>
+        </div>
+        <p class="stat" id="model-counts"></p>
+        <div id="model-list"></div>
+      </section>
+      <section class="card">
+        <h2>Systemprompts</h2>
+        <table>
+          <thead><tr><th>Slot</th><th>Gesetzt</th><th>Wo</th></tr></thead>
+          <tbody id="prompt-rows"></tbody>
+        </table>
       </section>
     </section>
 
@@ -198,6 +237,13 @@
       $("s2j_url").value = cfg.integrations?.step2job?.url || "";
       $("agents_url").value = cfg.integrations?.agents?.url || "";
       $("notes").value = cfg.notes || "";
+      $("llm_provider").value = cfg.llm?.provider || "";
+      $("llm_model").value = cfg.llm?.model || "";
+      $("llm_temp").value = cfg.llm?.temperature ?? "";
+      $("prompt_agent").value = cfg.prompts?.agent_system_prompt || "";
+      $("prompt_start").value = cfg.prompts?.start_call_prompt || "";
+      $("prompt_end").value = cfg.prompts?.end_call_prompt || "";
+      $("prompt_qa").value = cfg.prompts?.qa_system_prompt || "";
     }
     function readForm() {
       return {
@@ -222,6 +268,18 @@
           agents: { url: $("agents_url").value.trim() },
         },
         notes: $("notes").value,
+        llm: {
+          provider: $("llm_provider").value.trim(),
+          model: $("llm_model").value.trim(),
+          temperature: $("llm_temp").value === "" ? null : Number($("llm_temp").value),
+          wrapper: false,
+        },
+        prompts: {
+          agent_system_prompt: $("prompt_agent").value,
+          start_call_prompt: $("prompt_start").value,
+          end_call_prompt: $("prompt_end").value,
+          qa_system_prompt: $("prompt_qa").value,
+        },
       };
     }
     async function load() {
@@ -239,6 +297,40 @@
       $("combo").textContent = JSON.stringify(data.combo, null, 2);
       fillForm(data.config || {});
     }
+    function fmtVal(v) {
+      if (v === true) return '<span class="bool-t">true</span>';
+      if (v === false) return '<span class="bool-f">false</span>';
+      if (v === null || v === undefined || v === "") return '<span class="bool-f">unset</span>';
+      return `<code>${String(v)}</code>`;
+    }
+    function renderModels(data) {
+      const kind = $("kind-filter").value;
+      $("model-counts").textContent =
+        (data.counts ? Object.entries(data.counts).map(([k,v]) => k + "=" + v).join(" · ") : "");
+      $("prompt-rows").innerHTML = (data.prompts || []).map((p) =>
+        `<tr><td><code>${p.id}</code></td><td>${p.set ? '<span class="bool-t">true</span>' : '<span class="bool-f">false</span>'}</td><td>${p.where}</td></tr>`
+      ).join("");
+      $("model-list").innerHTML = (data.models || [])
+        .filter((m) => kind === "all" || m.kind === kind)
+        .map((m) => {
+          const rows = (m.all_fields || []).map((f) =>
+            `<tr><td><code>${f.name}</code></td><td>${f.type}</td><td>${fmtVal(f.default)}</td><td>${fmtVal(f.current)}</td><td>${f.set ? "ja" : "nein"}</td><td>${f.locked ? "factory" : "schema"}</td></tr>`
+          ).join("");
+          return `<details class="model"><summary>${m.provider} · ${m.kind} · wrapper=${m.wrapper.used} · temp=${m.has_temperature ? fmtVal(m.temperature) : "kein Feld"}</summary>
+            <p class="stat">${m.class} · ${m.origin} · ${m.file}${m.wrapper.module ? " · " + m.wrapper.module : ""}</p>
+            <table><thead><tr><th>Feld</th><th>Typ</th><th>Default</th><th>Aktuell</th><th>gesetzt</th><th>Quelle</th></tr></thead><tbody>${rows}</tbody></table>
+          </details>`;
+        }).join("");
+    }
+    async function loadModels() {
+      const res = await fetch("/api/models");
+      if (!res.ok) return;
+      window.__models = await res.json();
+      renderModels(window.__models);
+    }
+    $("kind-filter").addEventListener("change", () => {
+      if (window.__models) renderModels(window.__models);
+    });
     async function loadHistory() {
       const res = await fetch("/api/history?limit=80");
       const data = await res.json();
@@ -291,6 +383,7 @@
     load();
     loadHistory();
     loadAgents();
+    loadModels();
     setInterval(load, 20000);
   </script>
 </body>
