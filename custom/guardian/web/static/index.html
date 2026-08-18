@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VoiceEU Guardian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0e1110;
+      --paper: #171c1a;
+      --line: #2a332f;
+      --ink: #e8efe8;
+      --mute: #93a399;
+      --ok: #7dffb3;
+      --warn: #f0c36a;
+      --bad: #ff8a7a;
+      --eu: #7ee0c6;
+      --us: #8aa4ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans", sans-serif; }
+    body { min-height: 100vh; background-image: radial-gradient(900px 400px at 10% -10%, #1b3a30 0%, transparent 55%); }
+    header { padding: 28px 28px 8px; display: flex; justify-content: space-between; gap: 16px; align-items: end; }
+    .kicker { font-family: "IBM Plex Mono", monospace; letter-spacing: .14em; text-transform: uppercase; font-size: 11px; color: var(--eu); }
+    h1 { font-family: Fraunces, serif; font-size: clamp(32px, 5vw, 56px); margin: 6px 0 0; line-height: .95; }
+    .lede { max-width: 40rem; color: var(--mute); margin: 10px 0 0; line-height: 1.5; }
+    main { padding: 20px 28px 64px; display: grid; gap: 16px; }
+    .pulse { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+    .card h2 { font-family: Fraunces, serif; font-size: 22px; margin: 0 0 8px; }
+    .stat { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--mute); }
+    .big { font-family: Fraunces, serif; font-size: 28px; margin: 8px 0 0; }
+    .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th { color: var(--mute); font-weight: 500; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-family: "IBM Plex Mono", monospace; }
+    .tag.overlay { background: #14352c; color: var(--eu); }
+    .tag.upstream { background: #1b2340; color: var(--us); }
+    pre { background: #0b0e0d; border-radius: 12px; padding: 12px; overflow: auto; color: #c9d6cc; font-size: 12px; }
+    button { background: var(--ink); color: var(--bg); border: 0; border-radius: 999px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .5; }
+    @media (max-width: 860px) { .pulse { grid-template-columns: 1fr 1fr; } header, main { padding-left: 16px; padding-right: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="kicker">VoiceEU · Guardian-Dograh</div>
+      <h1>Guardian watches Dograh.<br />Your overlay stays yours.</h1>
+      <p class="lede">Diese Seite läuft <em>neben</em> Dograh. Sie ändert keinen Original-Code. Deepgram US bleibt. Deepgram EU ist ein eigener Anbieter.</p>
+    </div>
+    <button id="sweep" type="button">Sweep jetzt</button>
+  </header>
+  <main>
+    <section class="pulse">
+      <article class="card"><div class="stat">Dograh API</div><div class="big" id="api">…</div></article>
+      <article class="card"><div class="stat">Dograh UI</div><div class="big" id="ui">…</div></article>
+      <article class="card"><div class="stat">Overlay</div><div class="big" id="overlay">…</div></article>
+      <article class="card"><div class="stat">Healthcheck</div><div class="big" id="check">…</div></article>
+    </section>
+    <section class="card">
+      <h2>Anbieter</h2>
+      <table>
+        <thead><tr><th>Name</th><th>ID</th><th>Herkunft</th><th>Host</th></tr></thead>
+        <tbody id="providers"></tbody>
+      </table>
+    </section>
+    <section class="card">
+      <h2>Letzter Check</h2>
+      <pre id="log">Warte auf Dograh…</pre>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function mark(el, ok, okText, badText) {
+      el.textContent = ok ? okText : badText;
+      el.className = "big " + (ok ? "ok" : "bad");
+    }
+    async function load() {
+      const res = await fetch("/api/status", { cache: "no-store" });
+      if (!res.ok) { $("log").textContent = "Guardian API " + res.status; return; }
+      const data = await res.json();
+      mark($("api"), data.dograh.api.ok, "live " + data.dograh.api.ms + "ms", "offline");
+      mark($("ui"), data.dograh.ui.ok, "live " + data.dograh.ui.ms + "ms", "offline");
+      mark($("overlay"), data.overlay.deepgram_eu, data.overlay.file_count + " Dateien", "fehlt");
+      mark($("check"), data.healthcheck.ok, "pass", "fail " + data.healthcheck.code);
+      $("providers").innerHTML = data.providers.map((p) =>
+        `<tr><td>${p.name}</td><td><code>${p.id}</code></td><td><span class="tag ${p.origin}">${p.origin}</span></td><td>${p.base_url || "—"}</td></tr>`
+      ).join("");
+      $("log").textContent = data.healthcheck.output || JSON.stringify(data.dograh, null, 2);
+    }
+    $("sweep").addEventListener("click", async () => {
+      $("sweep").disabled = true;
+      await fetch("/api/checks").catch(() => {});
+      await load();
+      $("sweep").disabled = false;
+    });
+    load();
+    setInterval(load, 15000);
+  </script>
+</body>
+</html>

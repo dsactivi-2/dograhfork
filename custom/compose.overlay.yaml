@@ -1,0 +1,59 @@
+# Additive compose. Never edit docker-compose.yaml.
+# Loaded automatically by custom/scripts/deploy.sh via COMPOSE_FILE.
+#
+#   export COMPOSE_FILE=docker-compose.yaml:custom/compose.overlay.yaml
+#   ./custom/scripts/deploy.sh
+#
+# Effects:
+#   - Rebuild the API image so CUSTOM-SEAM + custom/ are inside the container
+#   - Mount custom/ live so overlay edits do not need a full rebuild
+#   - Start the Guardian control plane next to Dograh and probe its health API
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    image: dograh-guardian-api:local
+    pull_policy: build
+    environment:
+      DOGRAH_OVERLAY: "1"
+      DOGRAH_OVERLAY_VERSION: "0.2.0"
+    volumes:
+      - ./custom:/app/custom:ro
+
+  guardian:
+    build:
+      context: ./custom/guardian/web
+      dockerfile: Dockerfile
+    image: dograh-guardian-web:local
+    pull_policy: build
+    restart: unless-stopped
+    ports:
+      - "${GUARDIAN_PORT:-8787}:8787"
+    environment:
+      DOGRAH_API_URL: http://api:8000
+      DOGRAH_UI_URL: http://ui:3010
+      GUARDIAN_TOKEN: "${GUARDIAN_TOKEN:-}"
+      REPO_ROOT: /probe
+      OVERLAY_ROOT: /probe/custom
+    volumes:
+      - ./custom:/probe/custom:ro
+      - ./api:/probe/api:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/api/health').read()",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - app-network

@@ -11,7 +11,10 @@
     "custom/providers/fish_audio/validate.py",
     "custom/registry/register_custom_providers.py",
     "custom/branding/docs_overlay.json",
-    "custom/guardian/apply_branding.py"
+    "custom/guardian/apply_branding.py",
+    "custom/guardian/web/app.py",
+    "custom/compose.overlay.yaml",
+    "custom/scripts/deploy.sh"
   ],
   "required_seams": [
     "api/services/configuration/registry.py",
