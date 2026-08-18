@@ -5,6 +5,8 @@ This directory is the **only** place permanent Dograh customizations live.
 | Module | What it adds |
 | --- | --- |
 | `providers/deepgram_eu/` | New STT/TTS provider `deepgram_eu` → `api.eu.deepgram.com` |
+| `providers/deepgram_2/` | Live-agent STT: interim + smart_format + punctuate |
+| `providers/deepgram_3/` | Nova-3 live defaults (endpointing=400, vad_events) |
 | `providers/fish_audio/` | New TTS provider `fish_audio` |
 | `branding/` | Docs name + banner + support URL |
 | `guardian/` | CLI healthcheck + branding apply + safe merge |

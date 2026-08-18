@@ -18,11 +18,19 @@ from api.services.configuration.options import (
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
 )
 from api.services.configuration.registry import ServiceProviders
-# CUSTOM-SEAM: deepgram_eu,fish_audio
+# CUSTOM-SEAM: deepgram_eu,deepgram_2,deepgram_3,fish_audio
 from custom.providers.deepgram_eu.factory import (
     create_deepgram_eu_stt,
     create_deepgram_eu_tts,
     deepgram_eu_uses_external_turns,
+)
+from custom.providers.deepgram_2.factory import (
+    create_deepgram_2_stt,
+    deepgram_2_uses_external_turns,
+)
+from custom.providers.deepgram_3.factory import (
+    create_deepgram_3_stt,
+    deepgram_3_uses_external_turns,
 )
 from custom.providers.fish_audio.factory import create_fish_audio_tts
 from api.services.pipecat.gemini_json_schema_adapter import (
@@ -231,6 +239,10 @@ def stt_uses_external_turns(user_config) -> bool:
         return user_config.stt.model in DEEPGRAM_FLUX_MODELS
     if user_config.stt.provider == ServiceProviders.DEEPGRAM_EU.value:  # CUSTOM-SEAM: deepgram_eu
         return deepgram_eu_uses_external_turns(user_config)
+    if user_config.stt.provider == ServiceProviders.DEEPGRAM_2.value:  # CUSTOM-SEAM: deepgram_2
+        return deepgram_2_uses_external_turns(user_config)
+    if user_config.stt.provider == ServiceProviders.DEEPGRAM_3.value:  # CUSTOM-SEAM: deepgram_3
+        return deepgram_3_uses_external_turns(user_config)
     if user_config.stt.provider == ServiceProviders.DOGRAH.value:
         return dograh_stt_uses_flux_language(getattr(user_config.stt, "language", None))
     if user_config.stt.provider == ServiceProviders.CARTESIA.value:
@@ -555,6 +567,10 @@ def create_stt_service(
         )
     elif user_config.stt.provider == ServiceProviders.DEEPGRAM_EU.value:  # CUSTOM-SEAM: deepgram_eu
         return create_deepgram_eu_stt(user_config, audio_config, keyterms)
+    elif user_config.stt.provider == ServiceProviders.DEEPGRAM_2.value:  # CUSTOM-SEAM: deepgram_2
+        return create_deepgram_2_stt(user_config, audio_config, keyterms)
+    elif user_config.stt.provider == ServiceProviders.DEEPGRAM_3.value:  # CUSTOM-SEAM: deepgram_3
+        return create_deepgram_3_stt(user_config, audio_config, keyterms)
     else:
         raise HTTPException(
             status_code=400, detail=f"Invalid STT provider {user_config.stt.provider}"

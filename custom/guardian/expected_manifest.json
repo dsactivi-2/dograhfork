@@ -1,10 +1,19 @@
 {
-  "providers": ["deepgram_eu", "fish_audio"],
+  "providers": ["deepgram_eu", "deepgram_2", "deepgram_3", "fish_audio"],
   "required_paths": [
     "custom/providers/deepgram_eu/config.py",
     "custom/providers/deepgram_eu/schema.py",
     "custom/providers/deepgram_eu/factory.py",
     "custom/providers/deepgram_eu/validate.py",
+    "custom/providers/deepgram_2/config.py",
+    "custom/providers/deepgram_2/schema.py",
+    "custom/providers/deepgram_2/factory.py",
+    "custom/providers/deepgram_2/validate.py",
+    "custom/providers/deepgram_3/config.py",
+    "custom/providers/deepgram_3/schema.py",
+    "custom/providers/deepgram_3/factory.py",
+    "custom/providers/deepgram_3/validate.py",
+    "custom/providers/deepgram_common.py",
     "custom/providers/fish_audio/config.py",
     "custom/providers/fish_audio/schema.py",
     "custom/providers/fish_audio/factory.py",
@@ -14,7 +23,8 @@
     "custom/guardian/apply_branding.py",
     "custom/guardian/web/app.py",
     "custom/compose.overlay.yaml",
-    "custom/scripts/deploy.sh"
+    "custom/scripts/deploy.sh",
+    "custom/AGENT_COMBO.md"
   ],
   "required_seams": [
     "api/services/configuration/registry.py",
@@ -22,7 +32,7 @@
     "api/services/configuration/check_validity.py",
     "api/Dockerfile"
   ],
-  "required_markers": ["deepgram_eu", "fish_audio"],
+  "required_markers": ["deepgram_eu", "deepgram_2", "deepgram_3", "fish_audio"],
   "forbidden_edits": [
     "api/services/configuration/options/deepgram.py"
   ],

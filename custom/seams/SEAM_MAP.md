@@ -1,26 +1,21 @@
-# Seam map (built 2026-08-18, upstream SHA 689ca048)
+# Seam map (Guardian-Dograh)
 
-| ID | File | Lines | What the seam does | Marker |
-| --- | --- | --- | --- | --- |
-| A1 | `api/services/configuration/registry.py` | 71 | `ServiceProviders.DEEPGRAM_EU = "deepgram_eu"` | `CUSTOM-SEAM` |
-| A2 | `api/services/configuration/registry.py` | 72 | `ServiceProviders.FISH_AUDIO = "fish_audio"` | `CUSTOM-SEAM` |
-| A3 | `api/services/configuration/registry.py` | 110–111 | Literal on `BaseServiceConfiguration.provider` | `CUSTOM-SEAM` |
-| A4 | `api/services/configuration/registry.py` | 968–974 | Import EU + Fish schema classes | `CUSTOM-SEAM-BEGIN` |
-| A5 | `api/services/configuration/registry.py` | 1478–1479 | `TTSConfig` union entries | `CUSTOM-SEAM` |
-| A6 | `api/services/configuration/registry.py` | 1899 | `STTConfig` union entry | `CUSTOM-SEAM` |
-| B1 | `api/services/pipecat/service_factory.py` | 21–27 | Import factory helpers | `CUSTOM-SEAM` |
-| B2 | `api/services/pipecat/service_factory.py` | 232 | `stt_uses_external_turns` EU branch | `CUSTOM-SEAM` |
-| B3 | `api/services/pipecat/service_factory.py` | 556 | `create_stt_service` EU elif | `CUSTOM-SEAM` |
-| B4 | `api/services/pipecat/service_factory.py` | 927 | `create_tts_service` EU elif | `CUSTOM-SEAM` |
-| B5 | `api/services/pipecat/service_factory.py` | 929 | `create_tts_service` Fish Audio elif | `CUSTOM-SEAM` |
-| C1 | `api/services/configuration/check_validity.py` | 42 | `_validator_map` Deepgram EU | `CUSTOM-SEAM` |
-| C2 | `api/services/configuration/check_validity.py` | 43 | `_validator_map` Fish Audio | `CUSTOM-SEAM` |
-| C3 | `api/services/configuration/check_validity.py` | 316–323 | Thin validators that delegate to `custom/` | `CUSTOM-SEAM` |
-| D1 | `api/Dockerfile` | 144–145 | `COPY ./custom ./custom` | `CUSTOM-SEAM` |
-| D2 | `api/Dockerfile` | 174–175 | `apply_branding.py` after `COPY docs` | `CUSTOM-SEAM` |
+| ID | File | What the seam does | Marker |
+| --- | --- | --- | --- |
+| A1 | `api/services/configuration/registry.py` | Enum: `DEEPGRAM_EU`, `DEEPGRAM_2`, `DEEPGRAM_3`, `FISH_AUDIO` | `CUSTOM-SEAM` |
+| A2 | `api/services/configuration/registry.py` | Literal on `BaseServiceConfiguration.provider` | `CUSTOM-SEAM` |
+| A4 | `api/services/configuration/registry.py` | Import EU + 2 + 3 + Fish schema classes | `CUSTOM-SEAM-BEGIN` |
+| A5 | `api/services/configuration/registry.py` | `TTSConfig` union: EU + Fish | `CUSTOM-SEAM` |
+| A6 | `api/services/configuration/registry.py` | `STTConfig` union: EU + Deepgram 2 + Deepgram 3 | `CUSTOM-SEAM` |
+| B1 | `api/services/pipecat/service_factory.py` | Import factory helpers | `CUSTOM-SEAM` |
+| B2 | `api/services/pipecat/service_factory.py` | `stt_uses_external_turns` EU / 2 / 3 | `CUSTOM-SEAM` |
+| B3 | `api/services/pipecat/service_factory.py` | `create_stt_service` EU / 2 / 3 elifs | `CUSTOM-SEAM` |
+| B4 | `api/services/pipecat/service_factory.py` | `create_tts_service` EU + Fish elifs | `CUSTOM-SEAM` |
+| C | `api/services/configuration/check_validity.py` | Validators delegate to `custom/` | `CUSTOM-SEAM` |
+| D1 | `api/Dockerfile` | `COPY ./custom ./custom` | `CUSTOM-SEAM` |
+| D2 | `api/Dockerfile` | `apply_branding.py` after `COPY docs` | `CUSTOM-SEAM` |
 
-Branding content itself is **not** a core edit source of truth. It lives in
-`custom/branding/docs_overlay.json` and is written into `docs/docs.json` by
-`custom/guardian/apply_branding.py`.
+Official Deepgram (`options/deepgram.py` + factory US branch) stays byte-identical.
 
 After every upstream merge: `rg -n "CUSTOM-SEAM"` must still hit every row.
+`python3 custom/guardian/healthcheck.py` must exit 0.

@@ -141,7 +141,7 @@ ENV PYTHONUNBUFFERED=1
 # Copy application code (chown at copy-time avoids a duplicate /app layer
 # from a later `RUN chown -R`, which would double the on-disk size of /app).
 COPY --chown=dograh:dograh ./api ./api
-# CUSTOM-SEAM: deepgram_eu,fish_audio — overlay must be in the image
+# CUSTOM-SEAM: deepgram_eu,deepgram_2,deepgram_3,fish_audio — overlay must be in the image
 COPY --chown=dograh:dograh ./custom ./custom
 
 
