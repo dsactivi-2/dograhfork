@@ -4,7 +4,7 @@ This directory is the **only** place permanent Dograh customizations live.
 
 | Module | What it adds |
 | --- | --- |
-| `providers/deepgram_eu/` | New STT/TTS provider `deepgram_eu` → `api.eu.deepgram.com`. Setup: `ENDPOINT_SETUP.md` |
+| `providers/deepgram_eu/` | New STT/TTS provider `deepgram_eu` → `api.eu.deepgram.com`. Setup: `ENDPOINT_SETUP.md`, Pipecat: `PIPECAT_CLIENT.md` |
 | `providers/fish_audio/` | New TTS provider `fish_audio` (Pipecat `FishAudioTTSService`) |
 | `branding/` | Docs name + banner + support URL |
 | `guardian/` | Healthcheck, branding apply, safe upstream merge |

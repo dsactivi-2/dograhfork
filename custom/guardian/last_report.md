@@ -1,10 +1,10 @@
 Datum: 2026-08-18
 Agent: Grok Build / Dograh Guardian
-Aktion: implement (Deepgram EU Endpoint Setup)
+Aktion: document (Pipecat Deepgram Client Konfiguration)
 Upstream SHA vorher/nachher: 689ca048 (unverändert)
 custom/ intakt: ja
 Seams vorhanden: ja
-Defaults-Endpoint deepgram_eu: nicht geprüft (kein laufendes Dograh-API)
-EU-URLs: https://api.eu.deepgram.com / wss://api.eu.deepgram.com / Flux /v2/listen
-SDK: DeepgramClientEnvironment (nicht DeepgramEnvironment)
-Nächster menschlicher Schritt: UI-Provider Deepgram EU wählen, Key speichern, VPS build-mode
+Nova STT: DeepgramSTTService(base_url=https://api.eu.deepgram.com) → SDK DeepgramClientEnvironment
+Flux STT: DeepgramFluxSTTService(url=wss://api.eu.deepgram.com/v2/listen) → raw WS
+TTS: DeepgramTTSService(base_url=wss://api.eu.deepgram.com) → raw WS + /v1/speak
+Nächster menschlicher Schritt: In UI Deepgram EU wählen; Flux nicht mit base_url konfigurieren
