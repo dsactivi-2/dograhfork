@@ -18,11 +18,12 @@ Never add a `base_url` field to it.
 ## Start
 
 ```bash
-./custom/scripts/deploy.sh          # laptop
-./custom/scripts/deploy.sh remote   # VPS after setup_remote.sh
+bash custom/scripts/deploy.sh          # laptop
+bash custom/scripts/deploy.sh remote   # VPS after setup_remote.sh
+bash custom/scripts/diagnose.sh        # if something is red
 ```
 
-See [DEPLOY.md](./DEPLOY.md).
+See [DEPLOY.md](./DEPLOY.md) (includes Fehlerbehebung).
 
 ## After every upstream merge
 
