@@ -42,14 +42,14 @@ PROVIDERS = [
         "name": "Deepgram 2",
         "kind": "stt",
         "origin": "overlay",
-        "base_url": "DEEPGRAM_BASE_URL or api.deepgram.com",
+        "base_url": "api.eu.deepgram.com (DEEPGRAM_BASE_URL)",
     },
     {
         "id": "deepgram_3",
         "name": "Deepgram 3",
         "kind": "stt",
         "origin": "overlay",
-        "base_url": "DEEPGRAM_BASE_URL or api.deepgram.com",
+        "base_url": "api.eu.deepgram.com (DEEPGRAM_BASE_URL)",
     },
     {
         "id": "fish_audio",

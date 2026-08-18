@@ -21,11 +21,11 @@ def _user(provider, model="nova-3-general"):
     )
 
 
-def test_urls_default_us(monkeypatch):
+def test_urls_default_eu(monkeypatch):
     monkeypatch.delenv("DEEPGRAM_BASE_URL", raising=False)
     urls = deepgram_inference_urls()
-    assert urls["host"] == "api.deepgram.com"
-    assert urls["flux_listen"] == "wss://api.deepgram.com/v2/listen"
+    assert urls["host"] == "api.eu.deepgram.com"
+    assert urls["flux_listen"] == "wss://api.eu.deepgram.com/v2/listen"
 
 
 def test_urls_follow_env(monkeypatch):
@@ -50,6 +50,11 @@ def test_deepgram_3_nova_defaults_no_keyterms():
         kwargs = mocked.call_args.kwargs
         settings = kwargs["settings"]
         assert settings.endpointing == 400
+        assert settings.smart_format is True
+        assert settings.punctuate is True
+        assert settings.numerals is True
+        assert settings.interim_results is False
+        assert settings.diarize is False
         assert settings.extra.get("vad_events") is True
         assert not getattr(settings, "keyterm", None)
 

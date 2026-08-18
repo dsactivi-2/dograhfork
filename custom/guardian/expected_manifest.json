@@ -24,7 +24,8 @@
     "custom/guardian/web/app.py",
     "custom/compose.overlay.yaml",
     "custom/scripts/deploy.sh",
-    "custom/AGENT_COMBO.md"
+    "custom/AGENT_COMBO.md",
+    "custom/CONFIG.md"
   ],
   "required_seams": [
     "api/services/configuration/registry.py",

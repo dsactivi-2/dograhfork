@@ -26,6 +26,7 @@ bash custom/scripts/diagnose.sh        # if something is red
 ```
 
 See [DEPLOY.md](./DEPLOY.md) (includes Fehlerbehebung).
+See [CONFIG.md](./CONFIG.md) for UI vs factory settings.
 
 ## After every upstream merge
 

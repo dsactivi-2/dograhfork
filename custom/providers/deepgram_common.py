@@ -16,7 +16,7 @@ _FLUX_MODELS = {"flux-general-en", "flux-general-multi"}
 def normalize_host(raw: str | None) -> str:
     value = (raw or "").strip()
     if not value:
-        return DEFAULT_US_HOST
+        return DEFAULT_EU_HOST
     if "://" not in value:
         value = "https://" + value
     host = urlparse(value).hostname
