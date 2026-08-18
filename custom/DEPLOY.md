@@ -20,7 +20,7 @@ Danach:
 | Was | Adresse |
 | --- | --- |
 | Dograh (Anrufe, Workflows) | `https://DEINE-DOMAIN` oder `https://DEINE-IP` |
-| Guardian (wacht darüber) | `http://DEINE-DOMAIN:8787` |
+| Guardian (Config, History, MCP) | `http://DEINE-DOMAIN:8787` |
 
 ### Firewall
 
@@ -34,6 +34,8 @@ Danach:
 Ohne die UDP-Ports: Anruf verbindet, **kein Ton**.
 
 Optional in `.env`: `GUARDIAN_TOKEN=langes-geheimnis` — dann ist Guardian nicht öffentlich.
+
+In Guardian unter **Config** die Overlay-Werte setzen (Deepgram-Host, Fish Voice, Defaults). Jede Änderung landet in **History**. MCP für Agents: `POST http://HOST:8787/mcp` — siehe [GUARDIAN.md](../GUARDIAN.md).
 
 ## Erster Start auf dem Laptop
 

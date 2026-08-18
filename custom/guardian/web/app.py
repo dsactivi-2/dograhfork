@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guardian sidecar. Talks to Dograh over the compose network. Stdlib only."""
+"""Guardian sidecar: config, history, MCP. Stdlib only."""
 
 from __future__ import annotations
 
@@ -8,17 +8,30 @@ import os
 import subprocess
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+
+from mcp import TOOLS, discovery, handle_rpc
+from store import (
+    OVERLAY,
+    REPO,
+    agent_combo,
+    append_history,
+    list_history,
+    load_config,
+    record_boot_snapshot,
+    redact,
+    save_config,
+    write_runtime_env,
+)
 
 HOST = "0.0.0.0"
 PORT = int(os.environ.get("GUARDIAN_PORT", "8787"))
 DOGRAH_API = os.environ.get("DOGRAH_API_URL", "http://api:8000").rstrip("/")
 DOGRAH_UI = os.environ.get("DOGRAH_UI_URL", "http://ui:3010").rstrip("/")
 TOKEN = os.environ.get("GUARDIAN_TOKEN", "").strip()
-REPO_ROOT = Path(os.environ.get("REPO_ROOT", "/probe"))
-OVERLAY = Path(os.environ.get("OVERLAY_ROOT", str(REPO_ROOT / "custom")))
 STATIC = Path(__file__).resolve().parent / "static"
 STARTED = time.time()
 
@@ -29,6 +42,8 @@ PROVIDERS = [
         "kind": "stt/tts",
         "origin": "upstream",
         "base_url": "https://api.deepgram.com",
+        "ui": True,
+        "factory": "official defaults, no DEEPGRAM_BASE_URL",
     },
     {
         "id": "deepgram_eu",
@@ -36,20 +51,26 @@ PROVIDERS = [
         "kind": "stt/tts",
         "origin": "overlay",
         "base_url": "https://api.eu.deepgram.com",
+        "ui": True,
+        "factory": "fixed EU host",
     },
     {
         "id": "deepgram_2",
         "name": "Deepgram 2",
         "kind": "stt",
         "origin": "overlay",
-        "base_url": "api.eu.deepgram.com (DEEPGRAM_BASE_URL)",
+        "base_url": "DEEPGRAM_BASE_URL (default EU)",
+        "ui": True,
+        "factory": "interim + smart_format + punctuate",
     },
     {
         "id": "deepgram_3",
         "name": "Deepgram 3",
         "kind": "stt",
         "origin": "overlay",
-        "base_url": "api.eu.deepgram.com (DEEPGRAM_BASE_URL)",
+        "base_url": "DEEPGRAM_BASE_URL (default EU)",
+        "ui": True,
+        "factory": "endpointing 400, numerals, vad_events, interim off",
     },
     {
         "id": "fish_audio",
@@ -57,6 +78,8 @@ PROVIDERS = [
         "kind": "tts",
         "origin": "overlay",
         "base_url": "https://api.fish.audio",
+        "ui": True,
+        "factory": "voice required, pcm, pipeline sample_rate",
     },
     {
         "id": "telnyx",
@@ -64,6 +87,8 @@ PROVIDERS = [
         "kind": "telephony",
         "origin": "upstream",
         "base_url": None,
+        "ui": True,
+        "factory": "official — do not fork",
     },
 ]
 
@@ -71,7 +96,7 @@ PROVIDERS = [
 def probe(url: str, timeout: float = 4.0) -> dict:
     started = time.time()
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "dograh-guardian/0.2"})
+        req = urllib.request.Request(url, headers={"User-Agent": "dograh-guardian/0.3"})
         with urllib.request.urlopen(req, timeout=timeout) as res:
             body = res.read(4000).decode("utf-8", "replace")
             return {
@@ -80,7 +105,7 @@ def probe(url: str, timeout: float = 4.0) -> dict:
                 "ms": int((time.time() - started) * 1000),
                 "body": body[:400],
             }
-    except Exception as exc:  # noqa: BLE001 — sidecar must never crash a probe
+    except Exception as exc:  # noqa: BLE001
         return {
             "ok": False,
             "status": 0,
@@ -96,7 +121,7 @@ def overlay_files() -> list[dict]:
     for path in sorted(OVERLAY.rglob("*")):
         if not path.is_file():
             continue
-        if any(part.startswith(".") or part == "__pycache__" for part in path.parts):
+        if any(part.startswith(".") or part in {"__pycache__", "state"} for part in path.parts):
             continue
         rel = str(path.relative_to(OVERLAY.parent))
         rows.append({"path": rel, "bytes": path.stat().st_size})
@@ -108,28 +133,22 @@ def run_healthcheck() -> dict:
     if not script.is_file():
         return {"ok": False, "code": 2, "output": "healthcheck.py missing"}
     env = os.environ.copy()
-    try:
-        proc = subprocess.run(
-            ["python3", str(script)],
-            cwd=str(REPO_ROOT),
-            capture_output=True,
-            text=True,
-            timeout=20,
-            check=False,
-            env=env,
-        )
-    except OSError:
-        proc = subprocess.run(
-            ["python", str(script)],
-            cwd=str(REPO_ROOT),
-            capture_output=True,
-            text=True,
-            timeout=20,
-            check=False,
-            env=env,
-        )
-    output = (proc.stdout or "") + (proc.stderr or "")
-    return {"ok": proc.returncode == 0, "code": proc.returncode, "output": output.strip()}
+    for bin_name in ("python3", "python"):
+        try:
+            proc = subprocess.run(
+                [bin_name, str(script)],
+                cwd=str(REPO),
+                capture_output=True,
+                text=True,
+                timeout=20,
+                check=False,
+                env=env,
+            )
+            output = (proc.stdout or "") + (proc.stderr or "")
+            return {"ok": proc.returncode == 0, "code": proc.returncode, "output": output.strip()}
+        except FileNotFoundError:
+            continue
+    return {"ok": False, "code": 2, "output": "python not found"}
 
 
 def snapshot() -> dict:
@@ -138,19 +157,13 @@ def snapshot() -> dict:
     check = run_healthcheck()
     files = overlay_files()
     eu = (OVERLAY / "providers" / "deepgram_eu" / "config.py").is_file()
-    us_file = (
-        REPO_ROOT
-        / "api"
-        / "services"
-        / "configuration"
-        / "options"
-        / "deepgram.py"
-    )
+    us_file = REPO / "api" / "services" / "configuration" / "options" / "deepgram.py"
     us_text = us_file.read_text(encoding="utf-8", errors="replace") if us_file.is_file() else ""
     us_untouched = "api.eu.deepgram.com" not in us_text and "CUSTOM-SEAM" not in us_text
+    cfg = load_config()
     return {
         "product": "dograh-guardian",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "uptime_s": int(time.time() - STARTED),
         "dograh": {"api": api, "ui": ui},
         "overlay": {
@@ -162,6 +175,12 @@ def snapshot() -> dict:
         "providers": PROVIDERS,
         "wired": bool(api["ok"] and eu),
         "us_provider_intact": us_untouched,
+        "config": redact(cfg),
+        "combo": redact(agent_combo(cfg)),
+        "mcp": {
+            "path": "/mcp",
+            "tools": [t["name"] for t in TOOLS],
+        },
         "links": {
             "dograh_ui": DOGRAH_UI,
             "dograh_api": f"{DOGRAH_API}/api/v1/health",
@@ -170,8 +189,15 @@ def snapshot() -> dict:
     }
 
 
+def _contract() -> dict:
+    path = OVERLAY / "contract" / "overlay.json"
+    if path.is_file():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {"error": "missing contract"}
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version = "Guardian/0.2"
+    server_version = "Guardian/0.3"
 
     def log_message(self, fmt: str, *args) -> None:
         print(f"guardian {self.address_string()} {fmt % args}")
@@ -190,24 +216,43 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS")
         self.end_headers()
         self.wfile.write(body)
 
     def _json(self, code: int, payload: object) -> None:
-        raw = json.dumps(payload, indent=2).encode("utf-8")
-        self._send(code, raw, "application/json; charset=utf-8")
+        self._send(code, json.dumps(payload, indent=2).encode("utf-8"), "application/json; charset=utf-8")
+
+    def _read_json(self) -> dict:
+        length = int(self.headers.get("Content-Length") or "0")
+        raw = self.rfile.read(length) if length else b"{}"
+        if not raw:
+            return {}
+        data = json.loads(raw.decode("utf-8"))
+        return data if isinstance(data, dict) else {}
+
+    def _qs(self) -> dict[str, list[str]]:
+        parsed = urllib.parse.urlparse(self.path)
+        return urllib.parse.parse_qs(parsed.query)
+
+    def do_OPTIONS(self) -> None:  # noqa: N802
+        self._send(204, b"", "text/plain")
 
     def do_GET(self) -> None:  # noqa: N802
-        path = self.path.split("?", 1)[0]
+        path = urllib.parse.urlparse(self.path).path
         if path in ("/api/health", "/health"):
-            self._json(200, {"ok": True, "service": "guardian"})
+            self._json(200, {"ok": True, "service": "guardian", "version": "0.3.0"})
+            return
+        if path == "/.well-known/mcp.json":
+            self._json(200, discovery(f"http://0.0.0.0:{PORT}"))
             return
         if not self._authed():
             self._json(401, {"ok": False, "error": "set GUARDIAN_TOKEN and send Bearer"})
             return
         if path in ("/", "/index.html"):
-            html = (STATIC / "index.html").read_bytes()
-            self._send(200, html, "text/html; charset=utf-8")
+            self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
             return
         if path == "/api/status":
             self._json(200, snapshot())
@@ -221,6 +266,29 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/providers":
             self._json(200, {"providers": PROVIDERS})
             return
+        if path == "/api/config":
+            cfg = load_config()
+            raw = self._qs().get("raw", ["0"])[0] == "1"
+            self._json(200, cfg if raw else redact(cfg))
+            return
+        if path == "/api/history":
+            limit = int((self._qs().get("limit") or ["100"])[0])
+            self._json(200, {"events": list_history(limit)})
+            return
+        if path == "/api/contract":
+            self._json(200, _contract())
+            return
+        if path == "/api/combo":
+            self._json(200, redact(agent_combo()))
+            return
+        if path == "/api/skill":
+            skill = OVERLAY / "skills" / "voiceeu-guardian" / "SKILL.md"
+            text = skill.read_text(encoding="utf-8") if skill.is_file() else ""
+            self._send(200, text.encode("utf-8"), "text/markdown; charset=utf-8")
+            return
+        if path == "/api/mcp/tools":
+            self._json(200, {"tools": TOOLS})
+            return
         if path.startswith("/static/"):
             target = (STATIC / path[len("/static/") :]).resolve()
             if not str(target).startswith(str(STATIC.resolve())) or not target.is_file():
@@ -231,10 +299,51 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._json(404, {"error": "not found"})
 
+    def do_PUT(self) -> None:  # noqa: N802
+        self._write_config()
+
+    def do_POST(self) -> None:  # noqa: N802
+        path = urllib.parse.urlparse(self.path).path
+        if path == "/mcp":
+            if not self._authed():
+                self._json(401, {"ok": False, "error": "unauthorized"})
+                return
+            message = self._read_json()
+            code, payload = handle_rpc(message)
+            if payload is None:
+                self._send(code, b"", "application/json")
+                return
+            self._json(code, payload)
+            return
+        if path == "/api/config":
+            self._write_config()
+            return
+        self._json(404, {"error": "not found"})
+
+    def _write_config(self) -> None:
+        path = urllib.parse.urlparse(self.path).path
+        if path != "/api/config":
+            self._json(404, {"error": "not found"})
+            return
+        if not self._authed():
+            self._json(401, {"ok": False, "error": "unauthorized"})
+            return
+        try:
+            body = self._read_json()
+        except json.JSONDecodeError:
+            self._json(400, {"ok": False, "error": "invalid json"})
+            return
+        actor = self.headers.get("X-Actor") or body.get("actor") or "guardian-ui"
+        patch = body.get("config") if isinstance(body.get("config"), dict) else body
+        saved = save_config(patch, actor=str(actor), source="http")
+        self._json(200, {"ok": True, "config": redact(saved)})
+
 
 def main() -> None:
+    write_runtime_env()
+    record_boot_snapshot()
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
-    print(f"guardian listening on {HOST}:{PORT} api={DOGRAH_API}")
+    print(f"guardian listening on {HOST}:{PORT} api={DOGRAH_API} mcp=/mcp")
     httpd.serve_forever()
 
 

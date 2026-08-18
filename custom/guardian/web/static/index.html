@@ -9,76 +9,220 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0e1110;
-      --paper: #171c1a;
-      --line: #2a332f;
-      --ink: #e8efe8;
-      --mute: #93a399;
-      --ok: #7dffb3;
-      --warn: #f0c36a;
-      --bad: #ff8a7a;
-      --eu: #7ee0c6;
-      --us: #8aa4ff;
+      --bg: #0e1110; --paper: #171c1a; --line: #2a332f; --ink: #e8efe8;
+      --mute: #93a399; --ok: #7dffb3; --warn: #f0c36a; --bad: #ff8a7a;
+      --eu: #7ee0c6; --us: #8aa4ff; --field: #0b0e0d;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans", sans-serif; }
-    body { min-height: 100vh; background-image: radial-gradient(900px 400px at 10% -10%, #1b3a30 0%, transparent 55%); }
-    header { padding: 28px 28px 8px; display: flex; justify-content: space-between; gap: 16px; align-items: end; }
+    body { min-height: 100vh; }
+    header { padding: 24px 24px 0; }
     .kicker { font-family: "IBM Plex Mono", monospace; letter-spacing: .14em; text-transform: uppercase; font-size: 11px; color: var(--eu); }
-    h1 { font-family: Fraunces, serif; font-size: clamp(32px, 5vw, 56px); margin: 6px 0 0; line-height: .95; }
+    h1 { font-family: Fraunces, serif; font-size: clamp(28px, 4vw, 44px); margin: 6px 0 0; line-height: .95; }
     .lede { max-width: 40rem; color: var(--mute); margin: 10px 0 0; line-height: 1.5; }
-    main { padding: 20px 28px 64px; display: grid; gap: 16px; }
+    nav { display: flex; gap: 8px; padding: 16px 24px 0; flex-wrap: wrap; }
+    nav button {
+      background: transparent; color: var(--mute); border: 1px solid var(--line);
+      border-radius: 999px; padding: 8px 14px; font-weight: 600; cursor: pointer;
+    }
+    nav button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+    main { padding: 16px 24px 64px; display: grid; gap: 16px; }
     .pulse { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
-    .card h2 { font-family: Fraunces, serif; font-size: 22px; margin: 0 0 8px; }
+    .card h2 { font-family: Fraunces, serif; font-size: 22px; margin: 0 0 12px; }
     .stat { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--mute); }
-    .big { font-family: Fraunces, serif; font-size: 28px; margin: 8px 0 0; }
-    .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+    .big { font-family: Fraunces, serif; font-size: 26px; margin: 8px 0 0; }
+    .ok { color: var(--ok); } .bad { color: var(--bad); }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: top; }
     th { color: var(--mute); font-weight: 500; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
     .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-family: "IBM Plex Mono", monospace; }
     .tag.overlay { background: #14352c; color: var(--eu); }
     .tag.upstream { background: #1b2340; color: var(--us); }
-    pre { background: #0b0e0d; border-radius: 12px; padding: 12px; overflow: auto; color: #c9d6cc; font-size: 12px; }
-    button { background: var(--ink); color: var(--bg); border: 0; border-radius: 999px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
-    button:disabled { opacity: .5; }
-    @media (max-width: 860px) { .pulse { grid-template-columns: 1fr 1fr; } header, main { padding-left: 16px; padding-right: 16px; } }
+    pre { background: var(--field); border-radius: 12px; padding: 12px; overflow: auto; color: #c9d6cc; font-size: 12px; white-space: pre-wrap; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { display: grid; gap: 4px; font-size: 12px; color: var(--mute); }
+    input, textarea, select {
+      background: var(--field); color: var(--ink); border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 12px; font: 14px "IBM Plex Sans", sans-serif;
+    }
+    textarea { min-height: 72px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .actions button, #sweep {
+      background: var(--ink); color: var(--bg); border: 0; border-radius: 999px;
+      padding: 10px 16px; font-weight: 600; cursor: pointer;
+    }
+    .actions button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .panel { display: none; }
+    .panel.active { display: grid; gap: 16px; }
+    .flash { font-size: 13px; color: var(--eu); min-height: 1.2em; }
+    @media (max-width: 860px) {
+      .pulse, .grid { grid-template-columns: 1fr; }
+      header, main, nav { padding-left: 16px; padding-right: 16px; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <div>
-      <div class="kicker">VoiceEU · Guardian-Dograh</div>
-      <h1>Guardian watches Dograh.<br />Your overlay stays yours.</h1>
-      <p class="lede">Diese Seite läuft <em>neben</em> Dograh. Sie ändert keinen Original-Code. Deepgram US bleibt. Deepgram EU ist ein eigener Anbieter.</p>
-    </div>
-    <button id="sweep" type="button">Sweep jetzt</button>
+    <div class="kicker">VoiceEU · Guardian 0.3 · MCP /mcp</div>
+    <h1>Config, History, Agents.</h1>
+    <p class="lede">Hier setzt du die Overlay-Config. Jede Änderung wird protokolliert. Ein Deploy löscht das nicht — und wenn Dateien überschrieben werden, steht es in der History.</p>
   </header>
+  <nav>
+    <button type="button" data-tab="status" aria-selected="true">Status</button>
+    <button type="button" data-tab="config">Config</button>
+    <button type="button" data-tab="history">History</button>
+    <button type="button" data-tab="agents">MCP / Skills</button>
+  </nav>
   <main>
-    <section class="pulse">
-      <article class="card"><div class="stat">Dograh API</div><div class="big" id="api">…</div></article>
-      <article class="card"><div class="stat">Dograh UI</div><div class="big" id="ui">…</div></article>
-      <article class="card"><div class="stat">Overlay</div><div class="big" id="overlay">…</div></article>
-      <article class="card"><div class="stat">Healthcheck</div><div class="big" id="check">…</div></article>
+    <section id="status" class="panel active">
+      <div class="pulse">
+        <article class="card"><div class="stat">Dograh API</div><div class="big" id="api">…</div></article>
+        <article class="card"><div class="stat">Dograh UI</div><div class="big" id="ui">…</div></article>
+        <article class="card"><div class="stat">Overlay</div><div class="big" id="overlay">…</div></article>
+        <article class="card"><div class="stat">Healthcheck</div><div class="big" id="check">…</div></article>
+      </div>
+      <section class="card">
+        <h2>Anbieter</h2>
+        <table>
+          <thead><tr><th>Name</th><th>ID</th><th>Herkunft</th><th>Factory</th></tr></thead>
+          <tbody id="providers"></tbody>
+        </table>
+      </section>
+      <section class="card">
+        <h2>Letzter Check</h2>
+        <div class="actions"><button type="button" id="sweep">Sweep jetzt</button></div>
+        <pre id="log">Warte auf Dograh…</pre>
+      </section>
     </section>
-    <section class="card">
-      <h2>Anbieter</h2>
-      <table>
-        <thead><tr><th>Name</th><th>ID</th><th>Herkunft</th><th>Host</th></tr></thead>
-        <tbody id="providers"></tbody>
-      </table>
+
+    <section id="config" class="panel">
+      <section class="card">
+        <h2>Overlay-Config</h2>
+        <p class="lede" style="margin-top:0">Wird nach <code>custom/guardian/state/config.json</code> geschrieben und als <code>runtime.env</code> in die API geladen. Secrets erscheinen in der History nur als ***.</p>
+        <div class="grid">
+          <label>DEEPGRAM_BASE_URL<input id="deepgram_base_url" /></label>
+          <label>Default STT
+            <select id="default_stt">
+              <option>deepgram_3</option><option>deepgram_2</option>
+              <option>deepgram_eu</option><option>deepgram</option>
+            </select>
+          </label>
+          <label>Default TTS
+            <select id="default_tts"><option>fish_audio</option><option>deepgram_eu</option><option>deepgram</option></select>
+          </label>
+          <label>Deepgram STT Provider<input id="dg_provider" /></label>
+          <label>Deepgram Modell<input id="dg_model" /></label>
+          <label>Deepgram Sprache<input id="dg_language" /></label>
+          <label>Deepgram API-Key<input id="dg_key" type="password" autocomplete="off" /></label>
+          <label>Fish Voice-ID (reference_id)<input id="fish_voice" placeholder="32-Zeichen aus fish.audio/m/…" /></label>
+          <label>Fish API-Key<input id="fish_key" type="password" autocomplete="off" /></label>
+          <label>Fish Modell<input id="fish_model" /></label>
+          <label>Fish Sprache<input id="fish_language" /></label>
+          <label>Fish Latency
+            <select id="fish_latency"><option>balanced</option><option>normal</option></select>
+          </label>
+          <label>Step2Job URL<input id="s2j_url" /></label>
+          <label>Agents URL<input id="agents_url" /></label>
+        </div>
+        <label style="margin-top:12px">Notizen<textarea id="notes"></textarea></label>
+        <div class="actions">
+          <button type="button" id="save">Config speichern</button>
+          <button type="button" class="ghost" id="copy-combo">Agent-JSON kopieren</button>
+        </div>
+        <p class="flash" id="cfg-flash"></p>
+      </section>
+      <section class="card">
+        <h2>Agent-JSON aus dieser Config</h2>
+        <pre id="combo">…</pre>
+      </section>
     </section>
-    <section class="card">
-      <h2>Letzter Check</h2>
-      <pre id="log">Warte auf Dograh…</pre>
+
+    <section id="history" class="panel">
+      <section class="card">
+        <h2>Was wann geändert wurde</h2>
+        <p class="lede" style="margin-top:0"><code>deploy.diff</code> = Dateien haben sich seit dem letzten Start verändert (typisch nach Deploy/Upstream).</p>
+        <table>
+          <thead><tr><th>Zeit</th><th>Aktion</th><th>Wer</th><th>Was</th></tr></thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </section>
+    </section>
+
+    <section id="agents" class="panel">
+      <section class="card">
+        <h2>Guardian per MCP verbinden</h2>
+        <p class="lede" style="margin-top:0">Jeder Agent (Grok, Claude, Cursor) bindet sich hier an und holt Contract, Config und History.</p>
+        <pre id="mcp-snippet"></pre>
+        <div class="actions"><button type="button" class="ghost" id="copy-mcp">Snippet kopieren</button></div>
+      </section>
+      <section class="card">
+        <h2>Tools</h2>
+        <table>
+          <thead><tr><th>Tool</th><th>Zweck</th></tr></thead>
+          <tbody id="tools-body"></tbody>
+        </table>
+      </section>
+      <section class="card">
+        <h2>Skill</h2>
+        <pre id="skill">…</pre>
+      </section>
     </section>
   </main>
   <script>
     const $ = (id) => document.getElementById(id);
+    const host = location.origin;
     function mark(el, ok, okText, badText) {
       el.textContent = ok ? okText : badText;
       el.className = "big " + (ok ? "ok" : "bad");
+    }
+    document.querySelectorAll("nav button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-selected", b === btn));
+        document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === btn.dataset.tab));
+      });
+    });
+    function fillForm(cfg) {
+      $("deepgram_base_url").value = cfg.deepgram_base_url || "";
+      $("default_stt").value = cfg.default_stt || "deepgram_3";
+      $("default_tts").value = cfg.default_tts || "fish_audio";
+      $("dg_provider").value = cfg.deepgram_stt?.provider || "";
+      $("dg_model").value = cfg.deepgram_stt?.model || "";
+      $("dg_language").value = cfg.deepgram_stt?.language || "";
+      $("dg_key").value = cfg.deepgram_stt?.api_key && cfg.deepgram_stt.api_key !== "***" ? cfg.deepgram_stt.api_key : "";
+      $("fish_voice").value = cfg.fish?.voice || "";
+      $("fish_key").value = cfg.fish?.api_key && cfg.fish.api_key !== "***" ? cfg.fish.api_key : "";
+      $("fish_model").value = cfg.fish?.model || "";
+      $("fish_language").value = cfg.fish?.language || "";
+      $("fish_latency").value = cfg.fish?.latency || "balanced";
+      $("s2j_url").value = cfg.integrations?.step2job?.url || "";
+      $("agents_url").value = cfg.integrations?.agents?.url || "";
+      $("notes").value = cfg.notes || "";
+    }
+    function readForm() {
+      return {
+        deepgram_base_url: $("deepgram_base_url").value.trim(),
+        default_stt: $("default_stt").value,
+        default_tts: $("default_tts").value,
+        deepgram_stt: {
+          provider: $("dg_provider").value.trim(),
+          model: $("dg_model").value.trim(),
+          language: $("dg_language").value.trim(),
+          api_key: $("dg_key").value,
+        },
+        fish: {
+          voice: $("fish_voice").value.trim(),
+          api_key: $("fish_key").value,
+          model: $("fish_model").value.trim(),
+          language: $("fish_language").value.trim(),
+          latency: $("fish_latency").value,
+        },
+        integrations: {
+          step2job: { url: $("s2j_url").value.trim() },
+          agents: { url: $("agents_url").value.trim() },
+        },
+        notes: $("notes").value,
+      };
     }
     async function load() {
       const res = await fetch("/api/status", { cache: "no-store" });
@@ -89,9 +233,35 @@
       mark($("overlay"), data.overlay.deepgram_eu, data.overlay.file_count + " Dateien", "fehlt");
       mark($("check"), data.healthcheck.ok, "pass", "fail " + data.healthcheck.code);
       $("providers").innerHTML = data.providers.map((p) =>
-        `<tr><td>${p.name}</td><td><code>${p.id}</code></td><td><span class="tag ${p.origin}">${p.origin}</span></td><td>${p.base_url || "—"}</td></tr>`
+        `<tr><td>${p.name}</td><td><code>${p.id}</code></td><td><span class="tag ${p.origin}">${p.origin}</span></td><td>${p.factory || p.base_url || "—"}</td></tr>`
       ).join("");
       $("log").textContent = data.healthcheck.output || JSON.stringify(data.dograh, null, 2);
+      $("combo").textContent = JSON.stringify(data.combo, null, 2);
+      fillForm(data.config || {});
+    }
+    async function loadHistory() {
+      const res = await fetch("/api/history?limit=80");
+      const data = await res.json();
+      $("history-body").innerHTML = (data.events || []).map((e) =>
+        `<tr><td>${e.ts || ""}</td><td><code>${e.action}</code></td><td>${e.actor || ""} / ${e.source || ""}</td><td>${e.summary || (e.changed || []).join(", ")}</td></tr>`
+      ).join("") || "<tr><td colspan=4>Noch keine Einträge.</td></tr>";
+    }
+    async function loadAgents() {
+      const tools = await (await fetch("/api/mcp/tools")).json();
+      $("tools-body").innerHTML = (tools.tools || []).map((t) =>
+        `<tr><td><code>${t.name}</code></td><td>${t.description}</td></tr>`
+      ).join("");
+      const skill = await (await fetch("/api/skill")).text();
+      $("skill").textContent = skill;
+      const snippet = {
+        mcpServers: {
+          "voiceeu-guardian": {
+            url: host + "/mcp",
+            headers: { Authorization: "Bearer ${GUARDIAN_TOKEN}" },
+          },
+        },
+      };
+      $("mcp-snippet").textContent = JSON.stringify(snippet, null, 2);
     }
     $("sweep").addEventListener("click", async () => {
       $("sweep").disabled = true;
@@ -99,8 +269,29 @@
       await load();
       $("sweep").disabled = false;
     });
+    $("save").addEventListener("click", async () => {
+      $("cfg-flash").textContent = "Speichere…";
+      const res = await fetch("/api/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Actor": "guardian-ui" },
+        body: JSON.stringify(readForm()),
+      });
+      const data = await res.json();
+      $("cfg-flash").textContent = data.ok ? "Gespeichert. History-Eintrag geschrieben. runtime.env aktualisiert." : (data.error || "Fehler");
+      await load();
+      await loadHistory();
+    });
+    $("copy-combo").addEventListener("click", async () => {
+      await navigator.clipboard.writeText($("combo").textContent);
+      $("cfg-flash").textContent = "Agent-JSON kopiert.";
+    });
+    $("copy-mcp").addEventListener("click", async () => {
+      await navigator.clipboard.writeText($("mcp-snippet").textContent);
+    });
     load();
-    setInterval(load, 15000);
+    loadHistory();
+    loadAgents();
+    setInterval(load, 20000);
   </script>
 </body>
 </html>

@@ -1,0 +1,46 @@
+{
+  "product": "voiceeu-guardian",
+  "version": "0.3.0",
+  "branch": "Guardian-Dograh",
+  "mcp": {
+    "transport": "http",
+    "path": "/mcp",
+    "auth": "Bearer ${GUARDIAN_TOKEN}",
+    "discovery": "/.well-known/mcp.json"
+  },
+  "paths": {
+    "overlay": "custom/",
+    "config": "custom/guardian/state/config.json",
+    "history": "custom/guardian/state/history.jsonl",
+    "runtime_env": "custom/guardian/state/runtime.env",
+    "skill": "custom/guardian/skills/voiceeu-guardian/SKILL.md",
+    "seams": [
+      "api/services/configuration/registry.py",
+      "api/services/pipecat/service_factory.py",
+      "api/services/configuration/check_validity.py",
+      "api/Dockerfile"
+    ],
+    "forbidden": ["api/services/configuration/options/deepgram.py"]
+  },
+  "providers": {
+    "deepgram": { "origin": "upstream", "role": "official US STT/TTS", "editable": false },
+    "deepgram_eu": { "origin": "overlay", "role": "explicit EU host", "editable": false },
+    "deepgram_2": { "origin": "overlay", "role": "live interim profile", "host": "DEEPGRAM_BASE_URL" },
+    "deepgram_3": { "origin": "overlay", "role": "Nova-3 live defaults", "host": "DEEPGRAM_BASE_URL" },
+    "fish_audio": { "origin": "overlay", "role": "TTS PCM/WSS", "requires": ["api_key", "voice"] }
+  },
+  "factory_locks": {
+    "fish_audio": ["output_format=pcm", "sample_rate=transport_out", "voice required"],
+    "deepgram_3": ["endpointing=400", "interim_results=false", "vad_events", "no keyterms"]
+  },
+  "typical_agent": {
+    "stt": { "provider": "deepgram_3", "model": "nova-3-general", "language": "multi" },
+    "tts": { "provider": "fish_audio", "model": "s2.1-pro", "language": "de", "latency": "balanced" }
+  },
+  "rules": [
+    "Never edit official deepgram.py",
+    "Never collapse overlay siblings into upstream ids",
+    "Never rewrite custom/ on upstream merge (merge=ours)",
+    "Config changes go through Guardian so history records them"
+  ]
+}
