@@ -141,6 +141,9 @@ ENV PYTHONUNBUFFERED=1
 # Copy application code (chown at copy-time avoids a duplicate /app layer
 # from a later `RUN chown -R`, which would double the on-disk size of /app).
 COPY --chown=dograh:dograh ./api ./api
+# CUSTOM-SEAM: deepgram_eu,fish_audio — overlay must be in the image
+COPY --chown=dograh:dograh ./custom ./custom
+
 
 # Entrypoint scripts.
 #   start_services_docker.sh — single-container (docker-compose) entrypoint
@@ -168,6 +171,9 @@ COPY --from=ts-deps --chown=dograh:dograh /ts_validator/node_modules ./api/mcp_s
 # Product documentation — read at runtime by the MCP docs tools
 # (search_dograh_docs / fetch_dograh_doc) so agents can learn Dograh.
 COPY --chown=dograh:dograh ./docs ./docs
+# CUSTOM-SEAM: branding — apply VoiceEU banner/name from custom/branding
+RUN python custom/guardian/apply_branding.py
+
 
 ENV PYTHONPATH=/app
 

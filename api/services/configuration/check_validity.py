@@ -39,6 +39,8 @@ class UserConfigurationValidator:
             ServiceProviders.OPENAI.value: self._check_openai_api_key,
             ServiceProviders.ATLASCLOUD.value: self._check_openai_api_key,
             ServiceProviders.DEEPGRAM.value: self._check_deepgram_api_key,
+            ServiceProviders.DEEPGRAM_EU.value: self._check_deepgram_eu_api_key,  # CUSTOM-SEAM: deepgram_eu
+            ServiceProviders.FISH_AUDIO.value: self._check_fish_audio_api_key,  # CUSTOM-SEAM: fish_audio
             ServiceProviders.GROQ.value: self._check_groq_api_key,
             ServiceProviders.OPENROUTER.value: self._check_openrouter_api_key,
             ServiceProviders.INWORLD.value: self._check_inworld_api_key,
@@ -310,6 +312,16 @@ class UserConfigurationValidator:
                 "Please check that your API key is correct and active. "
                 "You can verify your keys at https://console.deepgram.com/."
             )
+
+    def _check_deepgram_eu_api_key(self, model: str, api_key: str) -> bool:  # CUSTOM-SEAM: deepgram_eu
+        from custom.providers.deepgram_eu.validate import check_deepgram_eu_api_key
+
+        return check_deepgram_eu_api_key(api_key)
+
+    def _check_fish_audio_api_key(self, model: str, api_key: str) -> bool:  # CUSTOM-SEAM: fish_audio
+        from custom.providers.fish_audio.validate import check_fish_audio_api_key
+
+        return check_fish_audio_api_key(api_key)
 
     def _check_groq_api_key(self, model: str, api_key: str) -> bool:
         client = Groq(api_key=api_key)
