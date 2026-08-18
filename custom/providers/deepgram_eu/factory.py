@@ -1,9 +1,9 @@
-"""Runtime factory for Deepgram EU. Mirrors US Deepgram plus EU hosts."""
+"""Runtime factory for Deepgram EU. Mirrors US Deepgram plus official EU hosts."""
 
 from api.services.configuration.options import DEEPGRAM_FLUX_MODELS
 from custom.providers.deepgram_eu.config import (
     FLUX_LISTEN_URL,
-    STT_HOST,
+    HTTP_BASE_URL,
     WS_BASE_URL,
 )
 from pipecat.services.deepgram.flux.stt import (
@@ -61,7 +61,7 @@ def create_deepgram_eu_stt(user_config, audio_config, keyterms=None):
     language = getattr(user_config.stt, "language", None) or "multi"
     return DeepgramSTTService(
         api_key=user_config.stt.api_key,
-        base_url=STT_HOST,
+        base_url=HTTP_BASE_URL,
         settings=DeepgramSTTSettings(
             language=language,
             profanity_filter=False,
