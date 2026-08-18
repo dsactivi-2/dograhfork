@@ -68,6 +68,8 @@ class ServiceProviders(str, Enum):
     OPENAI = "openai"
     ATLASCLOUD = "atlascloud"
     DEEPGRAM = "deepgram"
+    DEEPGRAM_EU = "deepgram_eu"  # CUSTOM-SEAM: deepgram_eu — do not delete on upstream merge
+    FISH_AUDIO = "fish_audio"  # CUSTOM-SEAM: fish_audio — do not delete on upstream merge
     GROQ = "groq"
     OPENROUTER = "openrouter"
     INWORLD = "inworld"
@@ -105,6 +107,8 @@ class BaseServiceConfiguration(BaseModel):
         ServiceProviders.OPENAI,
         ServiceProviders.ATLASCLOUD,
         ServiceProviders.DEEPGRAM,
+        ServiceProviders.DEEPGRAM_EU,  # CUSTOM-SEAM: deepgram_eu
+        ServiceProviders.FISH_AUDIO,  # CUSTOM-SEAM: fish_audio
         ServiceProviders.GROQ,
         ServiceProviders.OPENROUTER,
         ServiceProviders.INWORLD,
@@ -961,6 +965,15 @@ class DeepgramTTSConfiguration(BaseServiceConfiguration):
             return "aura-2"
 
 
+# CUSTOM-SEAM-BEGIN: deepgram_eu,fish_audio
+from custom.providers.deepgram_eu.schema import (  # noqa: E402
+    DeepgramEUSTTConfiguration,
+    DeepgramEUTTSConfiguration,
+)
+from custom.providers.fish_audio.schema import FishAudioTTSConfiguration  # noqa: E402
+# CUSTOM-SEAM-END: deepgram_eu,fish_audio
+
+
 ELEVENLABS_TTS_MODELS = ["eleven_flash_v2_5"]
 
 
@@ -1462,6 +1475,8 @@ class LmntTTSConfiguration(BaseTTSConfiguration):
 TTSConfig = Annotated[
     Union[
         DeepgramTTSConfiguration,
+        DeepgramEUTTSConfiguration,  # CUSTOM-SEAM: deepgram_eu
+        FishAudioTTSConfiguration,  # CUSTOM-SEAM: fish_audio
         GoogleTTSConfiguration,
         OpenAITTSService,
         ElevenlabsTTSConfiguration,
@@ -1881,6 +1896,7 @@ class SmallestAISTTConfiguration(BaseSTTConfiguration):
 STTConfig = Annotated[
     Union[
         DeepgramSTTConfiguration,
+        DeepgramEUSTTConfiguration,  # CUSTOM-SEAM: deepgram_eu
         CartesiaSTTConfiguration,
         OpenAISTTConfiguration,
         GoogleSTTConfiguration,

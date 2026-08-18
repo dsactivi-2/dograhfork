@@ -1,0 +1,10 @@
+{
+  "name": "Dograh VoiceEU",
+  "banner": {
+    "content": "**VoiceEU overlay** — Deepgram EU (`api.eu.deepgram.com`) + Fish Audio TTS. Official Dograh updates stay mergeable via `custom/`.",
+    "dismissible": true
+  },
+  "navbar": {
+    "support_href": "https://github.com/dsactivi-2/dograhfork/issues/new/choose"
+  }
+}

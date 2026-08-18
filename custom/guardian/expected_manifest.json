@@ -1,0 +1,27 @@
+{
+  "providers": ["deepgram_eu", "fish_audio"],
+  "required_paths": [
+    "custom/providers/deepgram_eu/config.py",
+    "custom/providers/deepgram_eu/schema.py",
+    "custom/providers/deepgram_eu/factory.py",
+    "custom/providers/deepgram_eu/validate.py",
+    "custom/providers/fish_audio/config.py",
+    "custom/providers/fish_audio/schema.py",
+    "custom/providers/fish_audio/factory.py",
+    "custom/providers/fish_audio/validate.py",
+    "custom/registry/register_custom_providers.py",
+    "custom/branding/docs_overlay.json",
+    "custom/guardian/apply_branding.py"
+  ],
+  "required_seams": [
+    "api/services/configuration/registry.py",
+    "api/services/pipecat/service_factory.py",
+    "api/services/configuration/check_validity.py",
+    "api/Dockerfile"
+  ],
+  "required_markers": ["deepgram_eu", "fish_audio"],
+  "forbidden_edits": [
+    "api/services/configuration/options/deepgram.py"
+  ],
+  "marker": "CUSTOM-SEAM"
+}
