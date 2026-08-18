@@ -27,6 +27,7 @@ bash custom/scripts/diagnose.sh        # if something is red
 
 See [DEPLOY.md](./DEPLOY.md) (includes Fehlerbehebung).
 See [CONFIG.md](./CONFIG.md) for UI vs factory settings.
+See [FISH_VOICE.md](./FISH_VOICE.md) to get a Fish `reference_id`.
 
 ## After every upstream merge
 
