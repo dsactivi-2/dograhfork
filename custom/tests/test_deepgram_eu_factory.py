@@ -26,6 +26,7 @@ def test_eu_stt_passes_eu_host():
         create_deepgram_eu_stt(user, _audio())
         kwargs = mocked.call_args.kwargs
         assert "api.eu.deepgram.com" in kwargs["base_url"]
+        assert kwargs["base_url"].startswith("https://")
 
 
 def test_eu_flux_passes_eu_listen_url():
