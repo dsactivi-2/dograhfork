@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "voiceeu-guardian": {
+      "url": "http://YOUR_HOST:8787/mcp",
+      "headers": {
+        "Authorization": "Bearer ${GUARDIAN_TOKEN}"
+      }
+    }
+  }
+}
