@@ -2,8 +2,8 @@
 
 Zwei Ebenen:
 
-1. **Was du in der UI setzt**
-2. **Was die Factory fest verdrahtet** (nicht in der UI, aber aktiv)
+1. **Was du in der UI setzt** (Agent-JSON + Overlay-Schema-Felder)
+2. **Was die Factory verdrahtet** (Host, Listen-Flags, Fallback)
 
 Keys nur in der Agent-Config. Kein `FISH_API_KEY` in der Shell.
 
@@ -38,18 +38,31 @@ PCM/WSS kommt automatisch. Nötig sind Key + Voice + gewünschtes Modell/Sprache
 
 ## Deepgram STT
 
+Deepgram 2 und Deepgram 3 sind **eigene Overlay-Provider** (nicht official US `deepgram`).
+Live-Flags liegen in `custom/providers/deepgram_common.py` (`LIVE_STT_DEFAULTS`)
+und sind im Schema als Bools sichtbar. Factory liest `getattr(stt, flag, default)`.
+
 ### UI / Agent-JSON
 
 | Feld | Typisch | Anpassen? |
 | --- | --- | --- |
-| `provider` | `deepgram_3` statt `deepgram` | anderes Live-Profil |
+| `provider` | `deepgram_2` oder `deepgram_3` | nie official `deepgram` für EU |
 | `api_key` | Deepgram-Key | Pflicht |
 | `model` | `nova-3-general` | oder Flux `flux-general-en` / `flux-general-multi` |
 | `language` | `multi` | oder fest `de` / `en` |
+| `smart_format` | `true` | Zahlen/Daten glätten |
+| `interim_results` | `false` | Zwischenstände aus |
+| `endpointing` | `true` → 100 ms | Ende der Äußerung |
+| `keyterm_prompting` | `true` | Workflow-Keyterms |
+| `diarize` | `true` | Sprecher trennen |
+| `punctuate` | `true` | Satzzeichen |
+| `profanity_filter` | `false` | |
+| `redact` | `false` | PII |
+| `replace` | `true` | Find and Replace (`settings.extra`) |
+| `numerals` | nur `deepgram_3` | `true` |
+| `vad_events` | nur `deepgram_3` | `true` (`extra`) |
 
-Mehr STT-Felder gibt die UI nicht. Den Rest setzt die Factory.
-
-### Factory — je nach Profil (nicht in der UI)
+### Factory — je nach Profil
 
 Gemeinsam für Nova (nicht Flux):
 
@@ -57,25 +70,26 @@ Gemeinsam für Nova (nicht Flux):
 - `sample_rate` = Pipeline-In
 - `should_interrupt=False` (UserAggregator macht Barge-in)
 - `language` Default `multi`
-- `profanity_filter=False`
 
-Official `deepgram` liest `DEEPGRAM_BASE_URL` **nicht**.
+Official `deepgram` in `api/services/pipecat/service_factory.py` bleibt unverändert
+und liest `DEEPGRAM_BASE_URL` **nicht**.
 
 | | `deepgram` | `deepgram_2` | `deepgram_3` |
 | --- | --- | --- | --- |
-| endpointing | 100 ms | 100 ms | 400 ms |
+| host | US, fest | `DEEPGRAM_BASE_URL` → EU | `DEEPGRAM_BASE_URL` → EU |
+| endpointing | 100 ms | 100 ms | 100 ms |
 | smart_format | — | an | an |
 | punctuate | — | an | an |
 | numerals | — | — | an |
-| interim_results | — | an | aus |
-| diarize | — | — | aus |
+| interim_results | — | aus | aus |
+| diarize | — | an | an |
 | vad_events | — | — | an (`extra`) |
-| keyterm | aus Workflow | aus Workflow | nicht gesetzt |
-| utterance_end_ms | — | — | nicht gesetzt |
+| keyterm | aus Workflow | aus Workflow, wenn Prompting an | aus Workflow, wenn Prompting an |
+| redact / replace | — | `extra` | `extra` |
 
-Flux-Modelle: `DeepgramFluxSTTService`, WS `wss://{host}/v2/listen`.
+Flux-Modelle: `DeepgramFluxSTTService`, WS `wss://{host}/v2/listen`, Keyterms wenn Prompting an.
 
-`deepgram_eu`: immer `api.eu.deepgram.com`, Settings wie official `deepgram` (nicht Profil 3).
+`deepgram_eu`: immer `api.eu.deepgram.com`, Settings wie official `deepgram` (nicht Profil 2/3).
 
 ## Deepgram TTS (nur wenn nicht Fish)
 
@@ -94,7 +108,7 @@ Official Deepgram-TTS bleibt US. Für EU-TTS **Deepgram EU** wählen.
 | --- | --- | --- |
 | `DEEPGRAM_BASE_URL` | Default Overlay `api.eu.deepgram.com` | nur `deepgram_2` / `deepgram_3` Inference |
 | Deepgram Key-Check | immer US `api.deepgram.com` | nur Validierung |
-| Neue-User-Defaults | STT=`deepgram`, TTS=ElevenLabs | nur frische Default-Configs — danach selbst auf 3 + Fish stellen |
+| Neue-User-Defaults | STT=`deepgram`, TTS=ElevenLabs | nur frische Default-Configs — danach selbst auf 2/3 + Fish stellen |
 | Fish | kein `FISH_*` Env | Key nur in Agent-TTS |
 
 ## Typisch setzen
@@ -123,5 +137,5 @@ Official Deepgram-TTS bleibt US. Für EU-TTS **Deepgram EU** wählen.
 | | UI anfassen | Factory schon fest |
 | --- | --- | --- |
 | Fish | Key, Voice, Modell, Sprache, optional Prosody/Latency | PCM, Sample-Rate, Filter, Silence |
-| Deepgram STT | Provider-Profil, Key, Modell, Sprache | EU-Host (2/3), Endpointing, Format, VAD, Interim je Profil |
+| Deepgram STT | Provider 2/3, Key, Modell, Sprache, Live-Flags | EU-Host, Endpointing 100 ms, Format, Diarize, Keyterms |
 | Deepgram TTS | Key + Voice; EU = Provider `deepgram_eu` | Region-WS, Filter, Silence |
