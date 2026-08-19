@@ -1,11 +1,11 @@
 """Create Pipecat FishAudioTTSService from a stored VoiceEU TTS config."""
 
 from fastapi import HTTPException
-
-from custom.providers.fish_audio.config import LATENCY_MODES
 from pipecat.services.fish.tts import FishAudioTTSService, FishAudioTTSSettings
 from pipecat.transcriptions.language import Language
 from pipecat.utils.text.xml_function_tag_filter import XMLFunctionTagFilter
+
+from custom.providers.fish_audio.config import LATENCY_MODES
 
 
 def create_fish_audio_tts(user_config, audio_config):

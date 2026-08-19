@@ -18,12 +18,11 @@ from api.services.configuration.options import (
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
 )
 from api.services.configuration.registry import ServiceProviders
-# CUSTOM-SEAM: deepgram_eu,deepgram_2,deepgram_3,fish_audio
-from custom.providers.deepgram_eu.factory import (
-    create_deepgram_eu_stt,
-    create_deepgram_eu_tts,
-    deepgram_eu_uses_external_turns,
+from api.services.pipecat.gemini_json_schema_adapter import (
+    DograhGeminiJSONSchemaAdapter,
 )
+from api.services.pipecat.minimax_tts import MiniMaxOwnedSessionTTSService
+from api.utils.url_security import validate_user_configured_service_url
 from custom.providers.deepgram_2.factory import (
     create_deepgram_2_stt,
     deepgram_2_uses_external_turns,
@@ -32,12 +31,14 @@ from custom.providers.deepgram_3.factory import (
     create_deepgram_3_stt,
     deepgram_3_uses_external_turns,
 )
-from custom.providers.fish_audio.factory import create_fish_audio_tts
-from api.services.pipecat.gemini_json_schema_adapter import (
-    DograhGeminiJSONSchemaAdapter,
+
+# CUSTOM-SEAM: deepgram_eu,deepgram_2,deepgram_3,fish_audio
+from custom.providers.deepgram_eu.factory import (
+    create_deepgram_eu_stt,
+    create_deepgram_eu_tts,
+    deepgram_eu_uses_external_turns,
 )
-from api.services.pipecat.minimax_tts import MiniMaxOwnedSessionTTSService
-from api.utils.url_security import validate_user_configured_service_url
+from custom.providers.fish_audio.factory import create_fish_audio_tts
 from pipecat.services.assemblyai.stt import AssemblyAISTTService, AssemblyAISTTSettings
 from pipecat.services.aws.llm import AWSBedrockLLMService, AWSBedrockLLMSettings
 from pipecat.services.azure.llm import AzureLLMService, AzureLLMSettings
@@ -237,11 +238,17 @@ def _elevenlabs_realtime_stt_host(base_url: str) -> str:
 def stt_uses_external_turns(user_config) -> bool:
     if user_config.stt.provider == ServiceProviders.DEEPGRAM.value:
         return user_config.stt.model in DEEPGRAM_FLUX_MODELS
-    if user_config.stt.provider == ServiceProviders.DEEPGRAM_EU.value:  # CUSTOM-SEAM: deepgram_eu
+    if (
+        user_config.stt.provider == ServiceProviders.DEEPGRAM_EU.value
+    ):  # CUSTOM-SEAM: deepgram_eu
         return deepgram_eu_uses_external_turns(user_config)
-    if user_config.stt.provider == ServiceProviders.DEEPGRAM_2.value:  # CUSTOM-SEAM: deepgram_2
+    if (
+        user_config.stt.provider == ServiceProviders.DEEPGRAM_2.value
+    ):  # CUSTOM-SEAM: deepgram_2
         return deepgram_2_uses_external_turns(user_config)
-    if user_config.stt.provider == ServiceProviders.DEEPGRAM_3.value:  # CUSTOM-SEAM: deepgram_3
+    if (
+        user_config.stt.provider == ServiceProviders.DEEPGRAM_3.value
+    ):  # CUSTOM-SEAM: deepgram_3
         return deepgram_3_uses_external_turns(user_config)
     if user_config.stt.provider == ServiceProviders.DOGRAH.value:
         return dograh_stt_uses_flux_language(getattr(user_config.stt, "language", None))
@@ -565,11 +572,17 @@ def create_stt_service(
             should_interrupt=False,
             sample_rate=audio_config.transport_in_sample_rate,
         )
-    elif user_config.stt.provider == ServiceProviders.DEEPGRAM_EU.value:  # CUSTOM-SEAM: deepgram_eu
+    elif (
+        user_config.stt.provider == ServiceProviders.DEEPGRAM_EU.value
+    ):  # CUSTOM-SEAM: deepgram_eu
         return create_deepgram_eu_stt(user_config, audio_config, keyterms)
-    elif user_config.stt.provider == ServiceProviders.DEEPGRAM_2.value:  # CUSTOM-SEAM: deepgram_2
+    elif (
+        user_config.stt.provider == ServiceProviders.DEEPGRAM_2.value
+    ):  # CUSTOM-SEAM: deepgram_2
         return create_deepgram_2_stt(user_config, audio_config, keyterms)
-    elif user_config.stt.provider == ServiceProviders.DEEPGRAM_3.value:  # CUSTOM-SEAM: deepgram_3
+    elif (
+        user_config.stt.provider == ServiceProviders.DEEPGRAM_3.value
+    ):  # CUSTOM-SEAM: deepgram_3
         return create_deepgram_3_stt(user_config, audio_config, keyterms)
     else:
         raise HTTPException(
@@ -940,9 +953,13 @@ def create_tts_service(
             skip_aggregator_types=["recording_router", "recording"],
             silence_time_s=1.0,
         )
-    elif user_config.tts.provider == ServiceProviders.DEEPGRAM_EU.value:  # CUSTOM-SEAM: deepgram_eu
+    elif (
+        user_config.tts.provider == ServiceProviders.DEEPGRAM_EU.value
+    ):  # CUSTOM-SEAM: deepgram_eu
         return create_deepgram_eu_tts(user_config, audio_config)
-    elif user_config.tts.provider == ServiceProviders.FISH_AUDIO.value:  # CUSTOM-SEAM: fish_audio
+    elif (
+        user_config.tts.provider == ServiceProviders.FISH_AUDIO.value
+    ):  # CUSTOM-SEAM: fish_audio
         return create_fish_audio_tts(user_config, audio_config)
     else:
         raise HTTPException(

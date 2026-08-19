@@ -1,11 +1,5 @@
 """Runtime factory for Deepgram EU. Mirrors US Deepgram plus EU hosts."""
 
-from api.services.configuration.options import DEEPGRAM_FLUX_MODELS
-from custom.providers.deepgram_eu.config import (
-    FLUX_LISTEN_URL,
-    STT_HOST,
-    WS_BASE_URL,
-)
 from pipecat.services.deepgram.flux.stt import (
     DeepgramFluxSTTService,
     DeepgramFluxSTTSettings,
@@ -14,6 +8,13 @@ from pipecat.services.deepgram.stt import DeepgramSTTService, DeepgramSTTSetting
 from pipecat.services.deepgram.tts import DeepgramTTSService, DeepgramTTSSettings
 from pipecat.transcriptions.language import Language
 from pipecat.utils.text.xml_function_tag_filter import XMLFunctionTagFilter
+
+from api.services.configuration.options import DEEPGRAM_FLUX_MODELS
+from custom.providers.deepgram_eu.config import (
+    FLUX_LISTEN_URL,
+    STT_HOST,
+    WS_BASE_URL,
+)
 
 # Copied from the US factory so this module never imports service_factory
 # (that import is a cycle: factory seam → this file).

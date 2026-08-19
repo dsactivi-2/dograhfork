@@ -3,7 +3,10 @@ from unittest.mock import patch
 
 from custom.providers.deepgram_2.factory import create_deepgram_2_stt
 from custom.providers.deepgram_3.factory import create_deepgram_3_stt
-from custom.providers.deepgram_common import deepgram_inference_urls, live_stt_settings_kwargs
+from custom.providers.deepgram_common import (
+    deepgram_inference_urls,
+    live_stt_settings_kwargs,
+)
 
 
 def _audio():
@@ -87,6 +90,8 @@ def test_live_settings_honor_user_overrides():
 def test_deepgram_3_flux_uses_listen_url(monkeypatch):
     monkeypatch.setenv("DEEPGRAM_BASE_URL", "https://api.eu.deepgram.com")
     with patch("custom.providers.deepgram_3.factory.DeepgramFluxSTTService") as mocked:
-        create_deepgram_3_stt(_user("deepgram_3", "flux-general-en"), _audio(), keyterms=["flux"])
+        create_deepgram_3_stt(
+            _user("deepgram_3", "flux-general-en"), _audio(), keyterms=["flux"]
+        )
         assert mocked.call_args.kwargs["url"] == "wss://api.eu.deepgram.com/v2/listen"
         assert mocked.call_args.kwargs["settings"].keyterm == ["flux"]

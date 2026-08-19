@@ -68,10 +68,18 @@ class ServiceProviders(str, Enum):
     OPENAI = "openai"
     ATLASCLOUD = "atlascloud"
     DEEPGRAM = "deepgram"
-    DEEPGRAM_EU = "deepgram_eu"  # CUSTOM-SEAM: deepgram_eu — do not delete on upstream merge
-    DEEPGRAM_2 = "deepgram_2"  # CUSTOM-SEAM: deepgram_2 — do not delete on upstream merge
-    DEEPGRAM_3 = "deepgram_3"  # CUSTOM-SEAM: deepgram_3 — do not delete on upstream merge
-    FISH_AUDIO = "fish_audio"  # CUSTOM-SEAM: fish_audio — do not delete on upstream merge
+    DEEPGRAM_EU = (
+        "deepgram_eu"  # CUSTOM-SEAM: deepgram_eu — do not delete on upstream merge
+    )
+    DEEPGRAM_2 = (
+        "deepgram_2"  # CUSTOM-SEAM: deepgram_2 — do not delete on upstream merge
+    )
+    DEEPGRAM_3 = (
+        "deepgram_3"  # CUSTOM-SEAM: deepgram_3 — do not delete on upstream merge
+    )
+    FISH_AUDIO = (
+        "fish_audio"  # CUSTOM-SEAM: fish_audio — do not delete on upstream merge
+    )
     GROQ = "groq"
     OPENROUTER = "openrouter"
     INWORLD = "inworld"
@@ -970,13 +978,14 @@ class DeepgramTTSConfiguration(BaseServiceConfiguration):
 
 
 # CUSTOM-SEAM-BEGIN: deepgram_eu,deepgram_2,deepgram_3,fish_audio
+from custom.providers.deepgram_2.schema import Deepgram2STTConfiguration  # noqa: E402
+from custom.providers.deepgram_3.schema import Deepgram3STTConfiguration  # noqa: E402
 from custom.providers.deepgram_eu.schema import (  # noqa: E402
     DeepgramEUSTTConfiguration,
     DeepgramEUTTSConfiguration,
 )
-from custom.providers.deepgram_2.schema import Deepgram2STTConfiguration  # noqa: E402
-from custom.providers.deepgram_3.schema import Deepgram3STTConfiguration  # noqa: E402
 from custom.providers.fish_audio.schema import FishAudioTTSConfiguration  # noqa: E402
+
 # CUSTOM-SEAM-END: deepgram_eu,deepgram_2,deepgram_3,fish_audio
 
 
