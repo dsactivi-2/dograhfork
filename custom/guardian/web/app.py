@@ -13,6 +13,7 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from inventory import build_inventory
 from mcp import TOOLS, discovery, handle_rpc
 from store import (
     OVERLAY,
@@ -163,7 +164,7 @@ def snapshot() -> dict:
     cfg = load_config()
     return {
         "product": "dograh-guardian",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "uptime_s": int(time.time() - STARTED),
         "dograh": {"api": api, "ui": ui},
         "overlay": {
@@ -280,6 +281,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/combo":
             self._json(200, redact(agent_combo()))
+            return
+        if path in ("/api/models", "/api/schema"):
+            self._json(200, build_inventory())
             return
         if path == "/api/skill":
             skill = OVERLAY / "skills" / "voiceeu-guardian" / "SKILL.md"

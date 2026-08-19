@@ -16,12 +16,13 @@ from api.services.configuration.registry import (
     register_stt,
 )
 from custom.providers.deepgram_2.config import DOCS_URL, PROVIDER_TITLE
+from custom.providers.deepgram_common import LIVE_STT_DEFAULTS
 
 DEEPGRAM_2_CONFIG = provider_model_config(
     PROVIDER_TITLE,
     description=(
-        "Deepgram live-agent profile: interim_results, smart_format, punctuate. "
-        "Inference host follows DEEPGRAM_BASE_URL (US default, or EU)."
+        "Deepgram live-agent profile: smart_format, endpointing 100ms, diarize, "
+        "keyterm prompting. Inference host follows DEEPGRAM_BASE_URL (EU default)."
     ),
     provider_docs_url=DOCS_URL,
 )
@@ -49,4 +50,40 @@ class Deepgram2STTConfiguration(BaseSTTConfiguration):
                 "flux-general-multi": DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
             },
         },
+    )
+    smart_format: bool = Field(
+        default=LIVE_STT_DEFAULTS["smart_format"],
+        description="Normalize numbers, dates, and punctuation.",
+    )
+    interim_results: bool = Field(
+        default=LIVE_STT_DEFAULTS["interim_results"],
+        description="Emit partial transcripts while the speaker is talking.",
+    )
+    endpointing: bool = Field(
+        default=LIVE_STT_DEFAULTS["endpointing"],
+        description="Detect end of utterance (100ms when on).",
+    )
+    keyterm_prompting: bool = Field(
+        default=LIVE_STT_DEFAULTS["keyterm_prompting"],
+        description="Boost workflow keyterms in recognition.",
+    )
+    diarize: bool = Field(
+        default=LIVE_STT_DEFAULTS["diarize"],
+        description="Separate speakers.",
+    )
+    punctuate: bool = Field(
+        default=LIVE_STT_DEFAULTS["punctuate"],
+        description="Add punctuation to the transcript.",
+    )
+    profanity_filter: bool = Field(
+        default=LIVE_STT_DEFAULTS["profanity_filter"],
+        description="Filter profanity from the transcript.",
+    )
+    redact: bool = Field(
+        default=LIVE_STT_DEFAULTS["redact"],
+        description="Redact PII / sensitive spans.",
+    )
+    replace: bool = Field(
+        default=LIVE_STT_DEFAULTS["replace"],
+        description="Enable Find and Replace on the transcript.",
     )

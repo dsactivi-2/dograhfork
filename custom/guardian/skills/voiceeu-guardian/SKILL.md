@@ -31,7 +31,7 @@ REST (same data, no MCP client needed):
 | PUT | `/api/config` | Save config — writes history + `runtime.env` |
 | GET | `/api/history` | What changed when (deploy diffs included) |
 | GET | `/api/contract` | Paths, seams, factory locks |
-| GET | `/api/combo` | Typical agent JSON |
+| GET | `/api/models` | Complete field dump (true AND false) |
 | GET | `/api/skill` | This file |
 | GET | `/api/checks` | Seam healthcheck |
 
@@ -42,6 +42,7 @@ REST (same data, no MCP client needed):
 3. `guardian_history` — did the last deploy overwrite something
 4. `guardian_config_get` — current VoiceEU defaults
 5. `guardian_agent_combo` — JSON to put on an agent
+6. `guardian_models` — every model/tool field including false/unset, wrapper, temperature, prompts
 
 ## What you may change
 

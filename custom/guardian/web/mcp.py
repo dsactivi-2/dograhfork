@@ -83,6 +83,12 @@ def tool_paths(_: dict[str, Any]) -> dict[str, Any]:
     return _ok(json.dumps(contract.get("paths", {}), indent=2))
 
 
+def tool_models(_: dict[str, Any]) -> dict[str, Any]:
+    from inventory import build_inventory
+
+    return _ok(json.dumps(build_inventory(), indent=2, default=str))
+
+
 def tool_diagnose(_: dict[str, Any]) -> dict[str, Any]:
     from app import run_healthcheck
 
@@ -144,6 +150,11 @@ TOOLS: list[dict[str, Any]] = [
         "description": "Run overlay healthcheck (seams, forbidden US Deepgram edits).",
         "inputSchema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "guardian_models",
+        "description": "Every model/tool field in the repo, including false/unset, wrappers, temperature, prompts.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
 ]
 
 HANDLERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
@@ -156,6 +167,7 @@ HANDLERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "guardian_skill": tool_skill,
     "guardian_paths": tool_paths,
     "guardian_diagnose": tool_diagnose,
+    "guardian_models": tool_models,
 }
 
 RESOURCES = [

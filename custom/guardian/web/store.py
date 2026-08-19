@@ -42,6 +42,93 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "agents": {"url": "", "notes": ""},
     },
     "notes": "",
+    "llm": {
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "temperature": None,
+        "max_tokens": None,
+        "wrapper": False,
+    },
+    "prompts": {
+        "agent_system_prompt": "",
+        "start_call_prompt": "",
+        "end_call_prompt": "",
+        "qa_system_prompt": "",
+    },
+    "factory": {
+        "deepgram": {
+            "wrapper": False,
+            "endpointing": 100,
+            "smart_format": False,
+            "punctuate": False,
+            "numerals": False,
+            "interim_results": False,
+            "diarize": False,
+            "vad_events": False,
+            "keyterm_from_workflow": True,
+            "utterance_end_ms": False,
+            "profanity_filter": False,
+            "should_interrupt": False,
+            "reads_DEEPGRAM_BASE_URL": False,
+        },
+        "deepgram_eu": {
+            "wrapper": True,
+            "endpointing": 100,
+            "smart_format": False,
+            "punctuate": False,
+            "numerals": False,
+            "interim_results": False,
+            "diarize": False,
+            "vad_events": False,
+            "keyterm_from_workflow": True,
+            "utterance_end_ms": False,
+            "profanity_filter": False,
+            "should_interrupt": False,
+            "reads_DEEPGRAM_BASE_URL": False,
+            "fixed_eu_host": True,
+        },
+        "deepgram_2": {
+            "wrapper": True,
+            "endpointing": 100,
+            "smart_format": True,
+            "punctuate": True,
+            "numerals": False,
+            "interim_results": True,
+            "diarize": False,
+            "vad_events": False,
+            "keyterm_from_workflow": True,
+            "utterance_end_ms": False,
+            "profanity_filter": False,
+            "should_interrupt": False,
+            "reads_DEEPGRAM_BASE_URL": True,
+        },
+        "deepgram_3": {
+            "wrapper": True,
+            "endpointing": 400,
+            "smart_format": True,
+            "punctuate": True,
+            "numerals": True,
+            "interim_results": False,
+            "diarize": False,
+            "vad_events": True,
+            "keyterm_from_workflow": False,
+            "utterance_end_ms": False,
+            "profanity_filter": False,
+            "should_interrupt": False,
+            "reads_DEEPGRAM_BASE_URL": True,
+        },
+        "fish_audio": {
+            "wrapper": True,
+            "output_format_pcm": True,
+            "sample_rate_from_pipeline": True,
+            "voice_required": True,
+            "xml_function_tag_filter": True,
+            "skip_recording_aggregator": True,
+            "silence_time_s": 1.0,
+            "invalid_latency_falls_back_balanced": True,
+            "reads_FISH_ENV": False,
+        },
+    },
 }
 
 
@@ -236,6 +323,9 @@ def agent_combo(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     cfg = cfg or load_config()
     fish = cfg["fish"]
     stt = cfg["deepgram_stt"]
+    llm = cfg.get("llm") or {}
+    prompts = cfg.get("prompts") or {}
+    factory = cfg.get("factory") or {}
     return {
         "stt": {
             "provider": stt.get("provider") or cfg.get("default_stt"),
@@ -254,4 +344,22 @@ def agent_combo(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "volume": fish.get("volume"),
             "normalize": fish.get("normalize"),
         },
+        "llm": {
+            "provider": llm.get("provider") or "",
+            "model": llm.get("model") or "",
+            "temperature": llm.get("temperature"),
+            "max_tokens": llm.get("max_tokens"),
+            "wrapper": bool(llm.get("wrapper")),
+        },
+        "prompts": {
+            "agent_system_prompt": prompts.get("agent_system_prompt") or "",
+            "start_call_prompt": prompts.get("start_call_prompt") or "",
+            "end_call_prompt": prompts.get("end_call_prompt") or "",
+            "qa_system_prompt": prompts.get("qa_system_prompt") or "",
+            "agent_system_prompt_set": bool(prompts.get("agent_system_prompt")),
+            "start_call_prompt_set": bool(prompts.get("start_call_prompt")),
+            "end_call_prompt_set": bool(prompts.get("end_call_prompt")),
+            "qa_system_prompt_set": bool(prompts.get("qa_system_prompt")),
+        },
+        "factory": factory,
     }

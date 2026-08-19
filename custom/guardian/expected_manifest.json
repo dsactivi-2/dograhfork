@@ -23,6 +23,7 @@
     "custom/guardian/apply_branding.py",
     "custom/guardian/web/app.py",
     "custom/guardian/web/store.py",
+    "custom/guardian/web/inventory.py",
     "custom/guardian/web/mcp.py",
     "custom/guardian/contract/overlay.json",
     "custom/guardian/skills/voiceeu-guardian/SKILL.md",
