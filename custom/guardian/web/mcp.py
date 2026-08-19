@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Callable
 
@@ -15,9 +16,9 @@ from store import (
     save_config,
 )
 
-import os
-
-CONTRACT = Path(os.environ.get("OVERLAY_ROOT", "/probe/custom")) / "contract" / "overlay.json"
+CONTRACT = (
+    Path(os.environ.get("OVERLAY_ROOT", "/probe/custom")) / "contract" / "overlay.json"
+)
 SKILL = (
     Path(os.environ.get("OVERLAY_ROOT", "/probe/custom"))
     / "skills"
@@ -55,7 +56,10 @@ def tool_config_get(_: dict[str, Any]) -> dict[str, Any]:
 def tool_config_set(args: dict[str, Any]) -> dict[str, Any]:
     patch = args.get("config") or args
     if not isinstance(patch, dict):
-        return {"isError": True, "content": [{"type": "text", "text": "config must be an object"}]}
+        return {
+            "isError": True,
+            "content": [{"type": "text", "text": "config must be an object"}],
+        }
     actor = str(args.get("actor") or "mcp-agent")
     saved = save_config(patch, actor=actor, source="mcp")
     return _ok(json.dumps({"ok": True, "redacted": redact(saved)}, indent=2))
@@ -171,9 +175,17 @@ HANDLERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
 }
 
 RESOURCES = [
-    {"uri": "guardian://contract", "name": "Overlay contract", "mimeType": "application/json"},
+    {
+        "uri": "guardian://contract",
+        "name": "Overlay contract",
+        "mimeType": "application/json",
+    },
     {"uri": "guardian://config", "name": "Live config", "mimeType": "application/json"},
-    {"uri": "guardian://history", "name": "Change history", "mimeType": "application/json"},
+    {
+        "uri": "guardian://history",
+        "name": "Change history",
+        "mimeType": "application/json",
+    },
     {"uri": "guardian://skill", "name": "Agent skill", "mimeType": "text/markdown"},
 ]
 
@@ -228,7 +240,9 @@ def handle_rpc(message: dict[str, Any]) -> tuple[int, dict[str, Any] | None]:
         return 200, {
             "jsonrpc": "2.0",
             "id": rpc_id,
-            "result": {"contents": [{"uri": uri, "mimeType": "text/plain", "text": text}]},
+            "result": {
+                "contents": [{"uri": uri, "mimeType": "text/plain", "text": text}]
+            },
         }
 
     return 200, {

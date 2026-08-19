@@ -1,6 +1,6 @@
 from pydantic import TypeAdapter
 
-from api.services.configuration.registry import REGISTRY, TTSConfig, ServiceType
+from api.services.configuration.registry import REGISTRY, ServiceType, TTSConfig
 from custom.providers.fish_audio.schema import FishAudioTTSConfiguration
 
 

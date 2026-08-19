@@ -2,9 +2,9 @@ from pydantic import TypeAdapter
 
 from api.services.configuration.registry import (
     REGISTRY,
-    STTConfig,
     ServiceProviders,
     ServiceType,
+    STTConfig,
 )
 from custom.providers.deepgram_eu.schema import DeepgramEUSTTConfiguration
 
@@ -13,7 +13,10 @@ def test_us_deepgram_still_registered():
     keys = {getattr(k, "value", k) for k in REGISTRY[ServiceType.STT]}
     assert "deepgram" in keys
     assert "deepgram_eu" in keys
-    assert REGISTRY[ServiceType.STT][ServiceProviders.DEEPGRAM] is not DeepgramEUSTTConfiguration
+    assert (
+        REGISTRY[ServiceType.STT][ServiceProviders.DEEPGRAM]
+        is not DeepgramEUSTTConfiguration
+    )
 
 
 def test_deepgram_eu_schema_title():

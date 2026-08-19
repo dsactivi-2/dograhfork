@@ -78,7 +78,9 @@ def resolve_endpointing(stt) -> int | bool:
     return raw
 
 
-def live_stt_settings_kwargs(user_config, *, model: str, language: str, keyterms=None) -> dict:
+def live_stt_settings_kwargs(
+    user_config, *, model: str, language: str, keyterms=None
+) -> dict:
     """Pipecat DeepgramSTTSettings kwargs for the Deepgram 2/3 live profile."""
     stt = user_config.stt
     flags = {name: live_flag(stt, name) for name in _LIVE_BOOL_KEYS}
