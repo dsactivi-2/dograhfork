@@ -23,7 +23,8 @@ DEEPGRAM_EU_PROVIDER_MODEL_CONFIG = provider_model_config(
     PROVIDER_TITLE,
     description=(
         "Deepgram speech models on the EU residency endpoint "
-        "(api.eu.deepgram.com). Same models as Deepgram US; traffic stays in EU."
+        "(api.eu.deepgram.com). Same API key as Deepgram US. "
+        "Whisper models are not available in the EU — use Nova or Flux."
     ),
     provider_docs_url=DOCS_URL,
 )

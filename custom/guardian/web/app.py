@@ -19,7 +19,6 @@ from store import (
     OVERLAY,
     REPO,
     agent_combo,
-    append_history,
     list_history,
     load_config,
     record_boot_snapshot,
@@ -122,7 +121,10 @@ def overlay_files() -> list[dict]:
     for path in sorted(OVERLAY.rglob("*")):
         if not path.is_file():
             continue
-        if any(part.startswith(".") or part in {"__pycache__", "state"} for part in path.parts):
+        if any(
+            part.startswith(".") or part in {"__pycache__", "state"}
+            for part in path.parts
+        ):
             continue
         rel = str(path.relative_to(OVERLAY.parent))
         rows.append({"path": rel, "bytes": path.stat().st_size})
@@ -146,7 +148,11 @@ def run_healthcheck() -> dict:
                 env=env,
             )
             output = (proc.stdout or "") + (proc.stderr or "")
-            return {"ok": proc.returncode == 0, "code": proc.returncode, "output": output.strip()}
+            return {
+                "ok": proc.returncode == 0,
+                "code": proc.returncode,
+                "output": output.strip(),
+            }
         except FileNotFoundError:
             continue
     return {"ok": False, "code": 2, "output": "python not found"}
@@ -159,7 +165,11 @@ def snapshot() -> dict:
     files = overlay_files()
     eu = (OVERLAY / "providers" / "deepgram_eu" / "config.py").is_file()
     us_file = REPO / "api" / "services" / "configuration" / "options" / "deepgram.py"
-    us_text = us_file.read_text(encoding="utf-8", errors="replace") if us_file.is_file() else ""
+    us_text = (
+        us_file.read_text(encoding="utf-8", errors="replace")
+        if us_file.is_file()
+        else ""
+    )
     us_untouched = "api.eu.deepgram.com" not in us_text and "CUSTOM-SEAM" not in us_text
     cfg = load_config()
     return {
@@ -224,7 +234,11 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _json(self, code: int, payload: object) -> None:
-        self._send(code, json.dumps(payload, indent=2).encode("utf-8"), "application/json; charset=utf-8")
+        self._send(
+            code,
+            json.dumps(payload, indent=2).encode("utf-8"),
+            "application/json; charset=utf-8",
+        )
 
     def _read_json(self) -> dict:
         length = int(self.headers.get("Content-Length") or "0")
@@ -250,10 +264,14 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, discovery(f"http://0.0.0.0:{PORT}"))
             return
         if not self._authed():
-            self._json(401, {"ok": False, "error": "set GUARDIAN_TOKEN and send Bearer"})
+            self._json(
+                401, {"ok": False, "error": "set GUARDIAN_TOKEN and send Bearer"}
+            )
             return
         if path in ("/", "/index.html"):
-            self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+            self._send(
+                200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8"
+            )
             return
         if path == "/api/status":
             self._json(200, snapshot())
@@ -295,10 +313,15 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path.startswith("/static/"):
             target = (STATIC / path[len("/static/") :]).resolve()
-            if not str(target).startswith(str(STATIC.resolve())) or not target.is_file():
+            if (
+                not str(target).startswith(str(STATIC.resolve()))
+                or not target.is_file()
+            ):
                 self._json(404, {"error": "not found"})
                 return
-            ctype = "text/css" if target.suffix == ".css" else "application/octet-stream"
+            ctype = (
+                "text/css" if target.suffix == ".css" else "application/octet-stream"
+            )
             self._send(200, target.read_bytes(), ctype)
             return
         self._json(404, {"error": "not found"})

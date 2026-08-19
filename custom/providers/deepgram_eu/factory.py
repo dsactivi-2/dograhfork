@@ -1,11 +1,5 @@
-"""Runtime factory for Deepgram EU. Mirrors US Deepgram plus EU hosts."""
+"""Runtime factory for Deepgram EU. Mirrors US Deepgram plus official EU hosts."""
 
-from api.services.configuration.options import DEEPGRAM_FLUX_MODELS
-from custom.providers.deepgram_eu.config import (
-    FLUX_LISTEN_URL,
-    STT_HOST,
-    WS_BASE_URL,
-)
 from pipecat.services.deepgram.flux.stt import (
     DeepgramFluxSTTService,
     DeepgramFluxSTTSettings,
@@ -14,6 +8,13 @@ from pipecat.services.deepgram.stt import DeepgramSTTService, DeepgramSTTSetting
 from pipecat.services.deepgram.tts import DeepgramTTSService, DeepgramTTSSettings
 from pipecat.transcriptions.language import Language
 from pipecat.utils.text.xml_function_tag_filter import XMLFunctionTagFilter
+
+from api.services.configuration.options import DEEPGRAM_FLUX_MODELS
+from custom.providers.deepgram_eu.config import (
+    FLUX_LISTEN_URL,
+    HTTP_BASE_URL,
+    WS_BASE_URL,
+)
 
 # Copied from the US factory so this module never imports service_factory
 # (that import is a cycle: factory seam → this file).
@@ -50,6 +51,8 @@ def create_deepgram_eu_stt(user_config, audio_config, keyterms=None):
             if language_hint:
                 settings_kwargs["language_hints"] = [language_hint]
 
+        # Flux: raw WebSocket. Parameter is `url`, not `base_url`.
+        # Default in Pipecat is wss://api.deepgram.com/v2/listen — must override.
         return DeepgramFluxSTTService(
             api_key=user_config.stt.api_key,
             url=FLUX_LISTEN_URL,
@@ -58,10 +61,12 @@ def create_deepgram_eu_stt(user_config, audio_config, keyterms=None):
             sample_rate=audio_config.transport_in_sample_rate,
         )
 
+    # Nova: Pipecat builds AsyncDeepgramClient + DeepgramClientEnvironment
+    # from base_url (HTTPS origin). Empty base_url = US host.
     language = getattr(user_config.stt, "language", None) or "multi"
     return DeepgramSTTService(
         api_key=user_config.stt.api_key,
-        base_url=STT_HOST,
+        base_url=HTTP_BASE_URL,
         settings=DeepgramSTTSettings(
             language=language,
             profanity_filter=False,
@@ -75,6 +80,7 @@ def create_deepgram_eu_stt(user_config, audio_config, keyterms=None):
 
 
 def create_deepgram_eu_tts(user_config, audio_config):
+    # TTS: raw WebSocket. Pipecat appends /v1/speak to this origin.
     xml_function_tag_filter = XMLFunctionTagFilter()
     return DeepgramTTSService(
         api_key=user_config.tts.api_key,

@@ -1,0 +1,14 @@
+# Overlay and seam ownership for VoiceEU/Guardian fork
+# Changes to these files require review before merge.
+
+# Custom overlay — VoiceEU providers, Guardian tooling, branding
+/custom/ @dsactivi-2
+
+# CUSTOM-SEAM integration points in official Dograh code
+/api/services/configuration/registry.py @dsactivi-2
+/api/services/pipecat/service_factory.py @dsactivi-2
+/api/services/configuration/check_validity.py @dsactivi-2
+/api/Dockerfile @dsactivi-2
+
+# Merge strategy for overlay preservation
+/.gitattributes @dsactivi-2
