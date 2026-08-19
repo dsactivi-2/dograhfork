@@ -16,6 +16,7 @@ from api.errors.failure import (
 from api.services.configuration.options import (
     DEEPGRAM_FLUX_MODELS,
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
+    DEEPGRAM_REGION_HOSTS,
 )
 from api.services.configuration.registry import ServiceProviders
 from api.services.pipecat.gemini_json_schema_adapter import (
@@ -168,6 +169,23 @@ DEEPGRAM_FLUX_LANGUAGE_HINTS = {
 }
 
 
+def _deepgram_region_host(region: str | None) -> str:
+    """Map a saved Deepgram region flag to the inference hostname.
+
+    Docs: https://developers.deepgram.com/reference/regional-endpoints
+    ``us`` → api.deepgram.com, ``eu`` → api.eu.deepgram.com.
+    """
+    key = (region or "us").strip().lower()
+    return DEEPGRAM_REGION_HOSTS.get(key, DEEPGRAM_REGION_HOSTS["us"])
+
+
+def _deepgram_optional_flag(stt_config, name: str):
+    """Return a config flag only when the attribute is present (legacy objects)."""
+    if not hasattr(stt_config, name):
+        return None
+    return getattr(stt_config, name)
+
+
 def dograh_stt_uses_flux_language(language: str | None) -> bool:
     language = language or "multi"
     return language in DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS
@@ -264,6 +282,7 @@ def create_stt_service(
         f"Creating STT service: provider={user_config.stt.provider}, model={user_config.stt.model}"
     )
     if user_config.stt.provider == ServiceProviders.DEEPGRAM.value:
+        host = _deepgram_region_host(getattr(user_config.stt, "region", None))
         if user_config.stt.model in DEEPGRAM_FLUX_MODELS:
             settings_kwargs = {
                 "model": user_config.stt.model,
@@ -277,26 +296,48 @@ def create_stt_service(
                 language_hint = DEEPGRAM_FLUX_LANGUAGE_HINTS.get(language)
                 if language_hint:
                     settings_kwargs["language_hints"] = [language_hint]
+            numerals = _deepgram_optional_flag(user_config.stt, "numerals")
+            if numerals is not None:
+                settings_kwargs["numerals"] = numerals
 
             return DeepgramFluxSTTService(
                 api_key=user_config.stt.api_key,
+                url=f"wss://{host}/v2/listen",
                 settings=DeepgramFluxSTTSettings(**settings_kwargs),
                 should_interrupt=False,  # Let UserAggregator take care of sending InterruptionFrame
                 sample_rate=audio_config.transport_in_sample_rate,
             )
 
-        # Other models than flux
-        # Use language from user config, defaulting to "multi" for multilingual support
+        # Nova Listen v1 — UI-saved flags override the previous factory constants.
         language = getattr(user_config.stt, "language", None) or "multi"
+        endpointing = _deepgram_optional_flag(user_config.stt, "endpointing")
+        if endpointing is None:
+            endpointing = 100
+        settings_kwargs = {
+            "language": language,
+            "profanity_filter": False,
+            "endpointing": endpointing,
+            "model": user_config.stt.model,
+            "keyterm": keyterms or [],
+        }
+        for flag in (
+            "smart_format",
+            "punctuate",
+            "numerals",
+            "interim_results",
+            "diarize",
+        ):
+            value = _deepgram_optional_flag(user_config.stt, flag)
+            if value is not None:
+                settings_kwargs[flag] = value
+        vad_events = _deepgram_optional_flag(user_config.stt, "vad_events")
+        if vad_events is not None:
+            settings_kwargs["extra"] = {"vad_events": bool(vad_events)}
+
         return DeepgramSTTService(
             api_key=user_config.stt.api_key,
-            settings=DeepgramSTTSettings(
-                language=language,
-                profanity_filter=False,
-                endpointing=100,
-                model=user_config.stt.model,
-                keyterm=keyterms or [],
-            ),
+            base_url=host,
+            settings=DeepgramSTTSettings(**settings_kwargs),
             should_interrupt=False,  # Let UserAggregator take care of sending InterruptionFrame
             sample_rate=audio_config.transport_in_sample_rate,
         )
@@ -566,8 +607,10 @@ def create_tts_service(
     # Create function call filter to prevent TTS from speaking function call tags
     xml_function_tag_filter = XMLFunctionTagFilter()
     if user_config.tts.provider == ServiceProviders.DEEPGRAM.value:
+        tts_host = _deepgram_region_host(getattr(user_config.tts, "region", None))
         return DeepgramTTSService(
             api_key=user_config.tts.api_key,
+            base_url=f"wss://{tts_host}",
             settings=DeepgramTTSSettings(voice=user_config.tts.voice),
             text_filters=[xml_function_tag_filter],
             skip_aggregator_types=["recording_router", "recording"],

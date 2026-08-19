@@ -22,6 +22,8 @@ from api.services.configuration.options import (
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGES,
     DEEPGRAM_LANGUAGES,
+    DEEPGRAM_NOVA_MODELS,
+    DEEPGRAM_REGIONS,
     DEEPGRAM_STT_MODELS,
     ELEVENLABS_STT_LANGUAGES,
     ELEVENLABS_STT_MODELS,
@@ -946,6 +948,15 @@ class DeepgramTTSConfiguration(BaseServiceConfiguration):
         default="aura-2-helena-en",
         description="Deepgram voice ID (model is inferred from the 'aura-N' prefix).",
     )
+    region: Literal["us", "eu"] = Field(
+        default="us",
+        description=(
+            "Deepgram inference region. 'us' uses api.deepgram.com; "
+            "'eu' uses api.eu.deepgram.com (EU data residency). "
+            "API-key validation still uses the global management host."
+        ),
+        json_schema_extra={"examples": DEEPGRAM_REGIONS},
+    )
 
     @computed_field
     @property
@@ -1509,6 +1520,71 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
                 "flux-general-multi": DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
             },
         },
+    )
+    region: Literal["us", "eu"] = Field(
+        default="us",
+        description=(
+            "Deepgram inference region used at call time. 'us' → api.deepgram.com; "
+            "'eu' → api.eu.deepgram.com. Saved on the STT config and passed to the "
+            "factory as the WebSocket host. Key validation still uses the global "
+            "management API (api.deepgram.com)."
+        ),
+        json_schema_extra={"examples": DEEPGRAM_REGIONS},
+    )
+    smart_format: bool = Field(
+        default=False,
+        description=(
+            "Nova Listen v1: apply smart formatting (numbers, dates, etc.). "
+            "Implies punctuation. Not sent for Flux (/v2/listen)."
+        ),
+        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+    )
+    punctuate: bool = Field(
+        default=False,
+        description=(
+            "Nova Listen v1: add punctuation and capitalization. Redundant when "
+            "smart_format is enabled. Not sent for Flux."
+        ),
+        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+    )
+    numerals: bool = Field(
+        default=False,
+        description="Convert spoken numbers to numerals. Supported on Nova and Flux.",
+    )
+    interim_results: bool = Field(
+        default=False,
+        description=(
+            "Nova Listen v1: stream partial transcripts before a final result. "
+            "Not sent for Flux."
+        ),
+        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+    )
+    diarize: bool = Field(
+        default=False,
+        description=(
+            "Nova Listen v1: speaker diarization. Usually leave off for 1:1 calls. "
+            "Not sent for Flux."
+        ),
+        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+    )
+    vad_events: bool = Field(
+        default=False,
+        description=(
+            "Nova Listen v1: emit SpeechStarted VAD events (Pipecat extra param). "
+            "Not sent for Flux."
+        ),
+        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+    )
+    endpointing: int = Field(
+        default=100,
+        ge=10,
+        le=5000,
+        description=(
+            "Nova Listen v1: milliseconds of silence before a transcript is marked "
+            "speech_final. Typical live-agent value is 400. Not sent for Flux "
+            "(Flux uses eot_threshold instead)."
+        ),
+        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
     )
 
 

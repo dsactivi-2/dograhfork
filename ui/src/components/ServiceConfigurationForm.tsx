@@ -36,6 +36,7 @@ interface SchemaProperty {
     format?: string;
     multiline?: boolean;
     docs_url?: string;
+    visible_for_models?: string[];
 }
 
 export interface ProviderSchema {
@@ -96,6 +97,11 @@ const VOICE_DISPLAY_NAMES: Record<string, string> = {
     "hitesh": "Hitesh (Male)",
 };
 
+const REGION_DISPLAY_NAMES: Record<string, string> = {
+    us: "US (api.deepgram.com)",
+    eu: "EU (api.eu.deepgram.com)",
+};
+
 export interface ServiceConfigurationFormProps {
     mode: 'global' | 'override';
     currentOverrides?: ModelOverrides;
@@ -147,8 +153,22 @@ function getSchemaDropdownOptions(
 }
 
 function getNumberSchema(schema: SchemaProperty | undefined): SchemaProperty | undefined {
-    if (schema?.type === "number") return schema;
-    return schema?.anyOf?.find(option => option.type === "number");
+    if (schema?.type === "number" || schema?.type === "integer") return schema;
+    return schema?.anyOf?.find(
+        option => option.type === "number" || option.type === "integer",
+    );
+}
+
+function getBooleanSchema(schema: SchemaProperty | undefined): SchemaProperty | undefined {
+    if (schema?.type === "boolean") return schema;
+    return schema?.anyOf?.find(option => option.type === "boolean");
+}
+
+function isFieldVisibleForModel(schema: SchemaProperty | undefined, modelValue?: string): boolean {
+    const allowed = schema?.visible_for_models;
+    if (!allowed || allowed.length === 0) return true;
+    if (!modelValue) return true;
+    return allowed.includes(modelValue);
 }
 
 export function ServiceConfigurationForm({
@@ -460,7 +480,7 @@ export function ServiceConfigurationForm({
     };
 
     const buildServiceConfig = (service: ServiceSegment, data: FormValues) => {
-        const config: Record<string, string | number | string[]> = {
+        const config: Record<string, string | number | boolean | string[]> = {
             provider: serviceProviders[service],
         };
         const keys = apiKeys[service].map(k => k.trim()).filter(k => k.length > 0);
@@ -471,7 +491,8 @@ export function ServiceConfigurationForm({
             if (!property.startsWith(`${service}_`)) return;
             const field = property.slice(service.length + 1);
             if (field === "api_key" || field === "provider") return;
-            config[field] = value as string | number;
+            if (value === undefined) return;
+            config[field] = value as string | number | boolean;
         });
         return config;
     };
@@ -531,9 +552,15 @@ export function ServiceConfigurationForm({
         const currentProvider = serviceProviders[service];
         const providerSchema = schemas?.[service]?.[currentProvider];
         if (!providerSchema) return [];
-        return Object.keys(providerSchema.properties).filter(
-            field => field !== "provider" && field !== "api_key"
-        );
+        const modelValue = watch(`${service}_model`) as string | undefined;
+        return Object.keys(providerSchema.properties).filter((field) => {
+            if (field === "provider" || field === "api_key") return false;
+            const fieldSchema = providerSchema.properties[field];
+            const actualSchema = fieldSchema?.$ref && providerSchema.$defs
+                ? providerSchema.$defs[fieldSchema.$ref.split('/').pop() || '']
+                : fieldSchema;
+            return isFieldVisibleForModel(actualSchema, modelValue);
+        });
     };
 
     const renderServiceFields = (service: ServiceSegment) => {
@@ -797,6 +824,9 @@ export function ServiceConfigurationForm({
                 if (field === "language") {
                     return LANGUAGE_DISPLAY_NAMES[value] || value;
                 }
+                if (field === "region") {
+                    return REGION_DISPLAY_NAMES[value] || value;
+                }
                 if (field === "voice") {
                     return VOICE_DISPLAY_NAMES[value] || value.charAt(0).toUpperCase() + value.slice(1);
                 }
@@ -835,6 +865,26 @@ export function ServiceConfigurationForm({
                         required: service !== "embeddings" && providerSchema.required?.includes(field),
                     })}
                 />
+            );
+        }
+
+        const booleanSchema = getBooleanSchema(actualSchema);
+        if (booleanSchema) {
+            const fieldKey = `${service}_${field}`;
+            const checked = Boolean(watch(fieldKey));
+            return (
+                <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                    <Label htmlFor={fieldKey} className="text-sm font-normal cursor-pointer">
+                        {checked ? "On" : "Off"}
+                    </Label>
+                    <Switch
+                        id={fieldKey}
+                        checked={checked}
+                        onCheckedChange={(enabled) => {
+                            setValue(fieldKey, enabled, { shouldDirty: true });
+                        }}
+                    />
+                </div>
             );
         }
 

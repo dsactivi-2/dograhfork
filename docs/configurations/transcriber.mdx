@@ -12,3 +12,27 @@ Transcriber providers receive the data needed to transcribe speech, such as call
 For locally deployed or self-hosted STT models, Dograh also supports Speaches, an OpenAI API-compatible server for streaming transcription.
 
 Example: Deepgram has their language support documentation at https://developers.deepgram.com/docs/models-languages-overview#nova-3
+
+## Deepgram STT
+
+Dograh exposes a **single** Deepgram transcriber (`provider: deepgram`). Saved UI fields are applied at call time by `create_stt_service` — they are not visual-only.
+
+| UI field | Stored on STT config | Runtime |
+|---|---|---|
+| API key | `api_key` | Deepgram auth |
+| Model | `model` | Nova Listen v1 (`nova-3-general`, `nova-3-medical`) or Flux (`flux-general-en`, `flux-general-multi`) |
+| Language | `language` | Nova `language` / Flux `language_hints` (`multi` = auto) |
+| Region | `region` (`us` \| `eu`) | WebSocket host `api.deepgram.com` or `api.eu.deepgram.com` |
+| Smart format, punctuate, interim results, diarize, VAD events, endpointing | matching bool / int fields | Passed to `DeepgramSTTSettings` for **Nova only** |
+| Numerals | `numerals` | Nova Listen v1 **and** Flux |
+
+Defaults match the previous factory (`region=us`, `endpointing=100`, feature flags off) so existing saved configs keep their behaviour until you change and save them.
+
+### Nova vs Flux
+
+- **Nova** uses `wss://{host}/v1/listen`. Feature toggles in the UI map 1:1 onto Deepgram Listen v1 query params (via Pipecat).
+- **Flux** uses `wss://{host}/v2/listen`. Listen v1 flags (`smart_format`, `punctuate`, `interim_results`, `diarize`, `vad_events`, `endpointing`) are **not** sent — Flux rejects many of them. The UI hides those fields when a Flux model is selected. Flux turn-taking still uses factory `eot_*` values.
+
+A typical live-agent Nova setup: `region=eu`, `smart_format` + `punctuate` + `numerals` on, `interim_results` and `diarize` off, `vad_events` on, `endpointing=400`.
+
+Key validation still calls the global management API (`api.deepgram.com`); EU inference requires a key that is allowed on `api.eu.deepgram.com`.

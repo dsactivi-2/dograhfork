@@ -1,4 +1,10 @@
 DEEPGRAM_FLUX_MODELS = ("flux-general-en", "flux-general-multi")
+DEEPGRAM_NOVA_MODELS = ("nova-3-general", "nova-3-medical")
+DEEPGRAM_REGIONS = ("us", "eu")
+DEEPGRAM_REGION_HOSTS = {
+    "us": "api.deepgram.com",
+    "eu": "api.eu.deepgram.com",
+}
 DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGES = (
     "de",
     "en",
@@ -15,7 +21,7 @@ DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS = (
     "multi",
     *DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGES,
 )
-DEEPGRAM_STT_MODELS = ("nova-3-general", "nova-3-medical", *DEEPGRAM_FLUX_MODELS)
+DEEPGRAM_STT_MODELS = (*DEEPGRAM_NOVA_MODELS, *DEEPGRAM_FLUX_MODELS)
 DEEPGRAM_LANGUAGES = (
     "multi",
     "ar",
