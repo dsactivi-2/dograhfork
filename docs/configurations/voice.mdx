@@ -14,3 +14,9 @@ For locally deployed or self-hosted TTS models, Dograh also supports Speaches, a
 If you don't find your favourite voice, you can always add the voice ID manually.
 
 ![Add Voice Manually](../images/add_tts_manually.png)
+
+## Deepgram TTS
+
+Deepgram Aura uses the same **region** field as Deepgram STT (`us` → `wss://api.deepgram.com`, `eu` → `wss://api.eu.deepgram.com`). The value is stored on the TTS configuration and passed to `DeepgramTTSService(base_url=…)` at call time.
+
+Pick EU when the Deepgram project is provisioned for EU data residency. Key validation still uses the global management host.

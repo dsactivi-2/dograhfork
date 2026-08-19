@@ -19,25 +19,16 @@ import { LANGUAGE_DISPLAY_NAMES } from "@/constants/languages";
 import { useUserConfig } from "@/context/UserConfigContext";
 import type { ModelOverrides } from "@/types/workflow-configurations";
 
-export type ServiceSegment = "llm" | "tts" | "stt" | "embeddings" | "realtime";
+import {
+    getBooleanSchema,
+    getNumberSchema,
+    getSchemaDropdownOptions,
+    isFieldVisibleForModel,
+    type SchemaProperty,
+} from "./serviceConfigurationSchema";
 
-interface SchemaProperty {
-    type?: string;
-    default?: string | number | boolean;
-    anyOf?: SchemaProperty[];
-    minimum?: number;
-    maximum?: number;
-    enum?: string[];
-    examples?: string[];
-    model_options?: Record<string, string[]>;
-    allow_custom_input?: boolean;
-    $ref?: string;
-    description?: string;
-    format?: string;
-    multiline?: boolean;
-    docs_url?: string;
-    visible_for_models?: string[];
-}
+export type { SchemaProperty };
+export type ServiceSegment = "llm" | "tts" | "stt" | "embeddings" | "realtime";
 
 export interface ProviderSchema {
     title?: string;
@@ -137,38 +128,6 @@ function getGlobalSummary(
     if (!provider) return "Not configured";
     const providerLabel = getProviderDisplayName(provider, providerSchema);
     return model ? `${providerLabel} / ${model}` : providerLabel || provider;
-}
-
-function getSchemaDropdownOptions(
-    schema: SchemaProperty | undefined,
-    modelValue?: string,
-): string[] | undefined {
-    let dropdownOptions = schema?.enum || schema?.examples;
-
-    if (schema?.model_options && modelValue && schema.model_options[modelValue]) {
-        dropdownOptions = schema.model_options[modelValue];
-    }
-
-    return dropdownOptions;
-}
-
-function getNumberSchema(schema: SchemaProperty | undefined): SchemaProperty | undefined {
-    if (schema?.type === "number" || schema?.type === "integer") return schema;
-    return schema?.anyOf?.find(
-        option => option.type === "number" || option.type === "integer",
-    );
-}
-
-function getBooleanSchema(schema: SchemaProperty | undefined): SchemaProperty | undefined {
-    if (schema?.type === "boolean") return schema;
-    return schema?.anyOf?.find(option => option.type === "boolean");
-}
-
-function isFieldVisibleForModel(schema: SchemaProperty | undefined, modelValue?: string): boolean {
-    const allowed = schema?.visible_for_models;
-    if (!allowed || allowed.length === 0) return true;
-    if (!modelValue) return true;
-    return allowed.includes(modelValue);
 }
 
 export function ServiceConfigurationForm({

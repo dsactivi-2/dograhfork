@@ -36,3 +36,18 @@ Defaults match the previous factory (`region=us`, `endpointing=100`, feature fla
 A typical live-agent Nova setup: `region=eu`, `smart_format` + `punctuate` + `numerals` on, `interim_results` and `diarize` off, `vad_events` on, `endpointing=400`.
 
 Key validation still calls the global management API (`api.deepgram.com`); EU inference requires a key that is allowed on `api.eu.deepgram.com`.
+
+### Verify saved flags are used on the call
+
+After saving the Deepgram transcriber:
+
+1. Reload the model configuration page and confirm region + toggles persist.
+2. Run a workflow and inspect API logs for `Deepgram STT runtime: region=… host=… model=…`.
+3. Nova: WebSocket host matches the region; Listen v1 query params match the saved flags.
+4. Flux: URL is `wss://{host}/v2/listen` and must **not** include `smart_format`, `interim_results`, `vad_events`, `punctuate`, or `endpointing` (those close the socket with WebSocket **1006**).
+
+Reference:
+
+- [Listen v1 query params](https://developers.deepgram.com/reference/speech-to-text/listen-streaming)
+- [Flux `/v2/listen`](https://developers.deepgram.com/reference/speech-to-text/listen-flux)
+- [Regional endpoints](https://developers.deepgram.com/reference/regional-endpoints)

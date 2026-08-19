@@ -44,6 +44,7 @@ def test_create_deepgram_flux_multi_uses_flux_service_with_language_hint():
     kwargs = mock_service.call_args.kwargs
     assert kwargs["settings"].model == "flux-general-multi"
     assert kwargs["settings"].language_hints == [Language.ES]
+    assert kwargs["url"] == "wss://api.deepgram.com/v2/listen"
 
 
 def test_create_deepgram_flux_multi_omits_auto_detect_language_hint():
@@ -68,3 +69,4 @@ def test_create_deepgram_flux_multi_omits_auto_detect_language_hint():
     kwargs = mock_service.call_args.kwargs
     assert kwargs["settings"].model == "flux-general-multi"
     assert kwargs["settings"].language_hints is NOT_GIVEN
+    assert kwargs["url"] == "wss://api.deepgram.com/v2/listen"

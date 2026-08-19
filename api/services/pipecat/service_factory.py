@@ -279,10 +279,15 @@ def create_stt_service(
         keyterms: Optional list of keyterms for speech recognition boosting (Deepgram only)
     """
     logger.info(
-        f"Creating STT service: provider={user_config.stt.provider}, model={user_config.stt.model}"
+        f"Creating STT service: provider={user_config.stt.provider}, "
+        f"model={user_config.stt.model}"
     )
     if user_config.stt.provider == ServiceProviders.DEEPGRAM.value:
         host = _deepgram_region_host(getattr(user_config.stt, "region", None))
+        logger.info(
+            f"Deepgram STT runtime: region={getattr(user_config.stt, 'region', None) or 'us'} "
+            f"host={host} model={user_config.stt.model}"
+        )
         if user_config.stt.model in DEEPGRAM_FLUX_MODELS:
             settings_kwargs = {
                 "model": user_config.stt.model,

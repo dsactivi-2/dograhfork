@@ -19,10 +19,10 @@ from api.services.configuration.options import (
     CARTESIA_INK_WHISPER_STT_LANGUAGES,
     CARTESIA_STT_LANGUAGES,
     CARTESIA_STT_MODELS,
+    DEEPGRAM_FLUX_MODELS,
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGES,
     DEEPGRAM_LANGUAGES,
-    DEEPGRAM_NOVA_MODELS,
     DEEPGRAM_REGIONS,
     DEEPGRAM_STT_MODELS,
     ELEVENLABS_STT_LANGUAGES,
@@ -955,7 +955,10 @@ class DeepgramTTSConfiguration(BaseServiceConfiguration):
             "'eu' uses api.eu.deepgram.com (EU data residency). "
             "API-key validation still uses the global management host."
         ),
-        json_schema_extra={"examples": DEEPGRAM_REGIONS},
+        json_schema_extra={
+            "examples": DEEPGRAM_REGIONS,
+            "docs_url": "https://developers.deepgram.com/reference/regional-endpoints",
+        },
     )
 
     @computed_field
@@ -1529,7 +1532,10 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
             "factory as the WebSocket host. Key validation still uses the global "
             "management API (api.deepgram.com)."
         ),
-        json_schema_extra={"examples": DEEPGRAM_REGIONS},
+        json_schema_extra={
+            "examples": DEEPGRAM_REGIONS,
+            "docs_url": "https://developers.deepgram.com/reference/regional-endpoints",
+        },
     )
     smart_format: bool = Field(
         default=False,
@@ -1537,7 +1543,7 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
             "Nova Listen v1: apply smart formatting (numbers, dates, etc.). "
             "Implies punctuation. Not sent for Flux (/v2/listen)."
         ),
-        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+        json_schema_extra={"hidden_for_models": list(DEEPGRAM_FLUX_MODELS)},
     )
     punctuate: bool = Field(
         default=False,
@@ -1545,7 +1551,7 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
             "Nova Listen v1: add punctuation and capitalization. Redundant when "
             "smart_format is enabled. Not sent for Flux."
         ),
-        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+        json_schema_extra={"hidden_for_models": list(DEEPGRAM_FLUX_MODELS)},
     )
     numerals: bool = Field(
         default=False,
@@ -1557,7 +1563,7 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
             "Nova Listen v1: stream partial transcripts before a final result. "
             "Not sent for Flux."
         ),
-        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+        json_schema_extra={"hidden_for_models": list(DEEPGRAM_FLUX_MODELS)},
     )
     diarize: bool = Field(
         default=False,
@@ -1565,7 +1571,7 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
             "Nova Listen v1: speaker diarization. Usually leave off for 1:1 calls. "
             "Not sent for Flux."
         ),
-        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+        json_schema_extra={"hidden_for_models": list(DEEPGRAM_FLUX_MODELS)},
     )
     vad_events: bool = Field(
         default=False,
@@ -1573,7 +1579,7 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
             "Nova Listen v1: emit SpeechStarted VAD events (Pipecat extra param). "
             "Not sent for Flux."
         ),
-        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+        json_schema_extra={"hidden_for_models": list(DEEPGRAM_FLUX_MODELS)},
     )
     endpointing: int = Field(
         default=100,
@@ -1584,7 +1590,7 @@ class DeepgramSTTConfiguration(BaseSTTConfiguration):
             "speech_final. Typical live-agent value is 400. Not sent for Flux "
             "(Flux uses eot_threshold instead)."
         ),
-        json_schema_extra={"visible_for_models": list(DEEPGRAM_NOVA_MODELS)},
+        json_schema_extra={"hidden_for_models": list(DEEPGRAM_FLUX_MODELS)},
     )
 
 
