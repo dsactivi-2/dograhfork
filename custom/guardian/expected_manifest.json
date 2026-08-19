@@ -1,0 +1,48 @@
+{
+  "providers": ["deepgram_eu", "deepgram_2", "deepgram_3", "fish_audio"],
+  "required_paths": [
+    "custom/providers/deepgram_eu/config.py",
+    "custom/providers/deepgram_eu/schema.py",
+    "custom/providers/deepgram_eu/factory.py",
+    "custom/providers/deepgram_eu/validate.py",
+    "custom/providers/deepgram_2/config.py",
+    "custom/providers/deepgram_2/schema.py",
+    "custom/providers/deepgram_2/factory.py",
+    "custom/providers/deepgram_2/validate.py",
+    "custom/providers/deepgram_3/config.py",
+    "custom/providers/deepgram_3/schema.py",
+    "custom/providers/deepgram_3/factory.py",
+    "custom/providers/deepgram_3/validate.py",
+    "custom/providers/deepgram_common.py",
+    "custom/providers/fish_audio/config.py",
+    "custom/providers/fish_audio/schema.py",
+    "custom/providers/fish_audio/factory.py",
+    "custom/providers/fish_audio/validate.py",
+    "custom/registry/register_custom_providers.py",
+    "custom/branding/docs_overlay.json",
+    "custom/guardian/apply_branding.py",
+    "custom/guardian/web/app.py",
+    "custom/guardian/web/store.py",
+    "custom/guardian/web/inventory.py",
+    "custom/guardian/web/mcp.py",
+    "custom/guardian/contract/overlay.json",
+    "custom/guardian/skills/voiceeu-guardian/SKILL.md",
+    "custom/guardian/mcp.json",
+    "custom/compose.overlay.yaml",
+    "custom/scripts/deploy.sh",
+    "custom/AGENT_COMBO.md",
+    "custom/CONFIG.md",
+    "custom/FISH_VOICE.md"
+  ],
+  "required_seams": [
+    "api/services/configuration/registry.py",
+    "api/services/pipecat/service_factory.py",
+    "api/services/configuration/check_validity.py",
+    "api/Dockerfile"
+  ],
+  "required_markers": ["deepgram_eu", "deepgram_2", "deepgram_3", "fish_audio"],
+  "forbidden_edits": [
+    "api/services/configuration/options/deepgram.py"
+  ],
+  "marker": "CUSTOM-SEAM"
+}
