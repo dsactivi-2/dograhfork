@@ -1,0 +1,97 @@
+name: Overlay safety checks
+
+# Verify the custom/ overlay and CUSTOM-SEAM hooks remain intact.
+# Skips cleanly when custom/ is absent (e.g. upstream-only branches).
+
+on:
+  pull_request:
+    branches: [main, Guardian-Dograh, custom]
+    paths:
+      - "api/**"
+      - "custom/**"
+      - ".gitattributes"
+      - ".github/workflows/overlay-safety.yml"
+  push:
+    branches: [Guardian-Dograh, custom]
+    paths:
+      - "api/**"
+      - "custom/**"
+      - ".gitattributes"
+      - ".github/workflows/overlay-safety.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  overlay-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo (with pipecat submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check if custom/ overlay exists
+        id: check-overlay
+        run: |
+          if [ -d "custom" ] && [ -f "custom/guardian/healthcheck.py" ]; then
+            echo "has_overlay=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_overlay=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::custom/ overlay not present — skipping overlay safety checks"
+          fi
+
+      - name: Set up Python 3.13
+        if: steps.check-overlay.outputs.has_overlay == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Create Python virtual environment
+        if: steps.check-overlay.outputs.has_overlay == 'true'
+        run: |
+          python -m venv .venv
+          echo "${{ github.workspace }}/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        if: steps.check-overlay.outputs.has_overlay == 'true'
+        run: ./scripts/setup_requirements.sh --dev
+
+      - name: Run guardian healthcheck (seams + manifest)
+        if: steps.check-overlay.outputs.has_overlay == 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python custom/guardian/healthcheck.py
+
+      - name: Run custom/tests/ pytest suite
+        if: steps.check-overlay.outputs.has_overlay == 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest custom/tests/ -xvs
+
+      - name: Verify .gitattributes merge=ours rule
+        if: steps.check-overlay.outputs.has_overlay == 'true'
+        run: |
+          if ! grep -q 'custom/\*\* merge=ours' .gitattributes; then
+            echo "::error::.gitattributes is missing the 'custom/** merge=ours' rule"
+            exit 1
+          fi
+          echo ".gitattributes merge=ours rule is intact"
+
+  notify-slack-failure:
+    needs: overlay-safety
+    if: ${{ always() && needs.overlay-safety.result == 'failure' }}
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Send Slack notification - Failure
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "❌ Overlay safety checks failed on ${{ github.ref_name }} by ${{ github.actor }} - <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
+            }

@@ -2,11 +2,12 @@ name: Pre-PR drift check
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, Guardian-Dograh, custom]
     paths:
       - "api/**"
       - "ui/**"
       - "pipecat/**"
+      - "custom/**"
       - "scripts/dump_docs_openapi.py"
       - "scripts/format.sh"
       - "docs/api-reference/openapi.json"

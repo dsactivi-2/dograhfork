@@ -196,14 +196,20 @@ def _field_from_ann(stmt: ast.AnnAssign) -> dict[str, Any] | None:
         "has_default": False,
     }
     value = stmt.value
-    if isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "Field":
+    if (
+        isinstance(value, ast.Call)
+        and isinstance(value.func, ast.Name)
+        and value.func.id == "Field"
+    ):
         kwargs = {kw.arg: _literal(kw.value) for kw in value.keywords if kw.arg}
         if value.args:
             kwargs.setdefault("default", _literal(value.args[0]))
         if "default" in kwargs:
             info["default"] = kwargs["default"]
             info["has_default"] = True
-            info["required"] = kwargs["default"] is None and "default_factory" not in kwargs
+            info["required"] = (
+                kwargs["default"] is None and "default_factory" not in kwargs
+            )
         if "default_factory" in kwargs:
             info["has_default"] = True
             info["required"] = False
@@ -254,7 +260,13 @@ def _provider_id(fields: list[dict[str, Any]]) -> str | None:
             return default
         typ = field.get("type") or ""
         if "ServiceProviders." in typ:
-            return typ.split("ServiceProviders.")[-1].split("]")[0].split(",")[0].strip().lower()
+            return (
+                typ.split("ServiceProviders.")[-1]
+                .split("]")[0]
+                .split(",")[0]
+                .strip()
+                .lower()
+            )
     return None
 
 
@@ -281,7 +293,9 @@ def parse_schema_file(path: Path) -> list[dict[str, Any]]:
                 "class": node.name,
                 "kind": kind,
                 "provider": provider,
-                "origin": "overlay" if "custom/" in str(path).replace("\\", "/") else "upstream",
+                "origin": "overlay"
+                if "custom/" in str(path).replace("\\", "/")
+                else "upstream",
                 "file": _rel(path),
                 "fields": fields,
             }
@@ -307,10 +321,15 @@ def collect_classes() -> list[dict[str, Any]]:
 
 
 def _current_for(provider: str, field: str, cfg: dict[str, Any]) -> Any:
-    if provider in {"deepgram_2", "deepgram_3", "deepgram_eu", "deepgram"} and field in (
-        cfg.get("deepgram_stt") or {}
-    ):
-        if (cfg.get("deepgram_stt") or {}).get("provider") == provider or field != "provider":
+    if provider in {
+        "deepgram_2",
+        "deepgram_3",
+        "deepgram_eu",
+        "deepgram",
+    } and field in (cfg.get("deepgram_stt") or {}):
+        if (cfg.get("deepgram_stt") or {}).get(
+            "provider"
+        ) == provider or field != "provider":
             if provider == (cfg.get("deepgram_stt") or {}).get("provider") or field in {
                 "api_key",
                 "model",
@@ -371,8 +390,13 @@ def build_inventory(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     models = []
     for item in classes:
         provider = item["provider"]
-        factory = FACTORY_FLAGS.get(provider, {"wrapper": False, "wrapper_module": "", "flags": {}})
-        ui_fields = [_field_row(f, _current_for(provider, f["name"], cfg)) for f in item["fields"]]
+        factory = FACTORY_FLAGS.get(
+            provider, {"wrapper": False, "wrapper_module": "", "flags": {}}
+        )
+        ui_fields = [
+            _field_row(f, _current_for(provider, f["name"], cfg))
+            for f in item["fields"]
+        ]
         factory_fields = _flag_rows(factory.get("flags") or {})
         has_temp = any(f["name"] == "temperature" for f in ui_fields)
         models.append(
@@ -387,7 +411,10 @@ def build_inventory(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                     "module": factory.get("wrapper_module") or "",
                 },
                 "has_temperature": has_temp,
-                "temperature": next((f["current"] for f in ui_fields if f["name"] == "temperature"), None),
+                "temperature": next(
+                    (f["current"] for f in ui_fields if f["name"] == "temperature"),
+                    None,
+                ),
                 "ui_fields": ui_fields,
                 "factory_fields": factory_fields,
                 "all_fields": ui_fields + factory_fields,
@@ -431,7 +458,8 @@ def build_inventory(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 for m in models
             ),
             "wrapper": False,
-            "system_prompt": (cfg.get("prompts") or {}).get("agent_system_prompt") or "",
+            "system_prompt": (cfg.get("prompts") or {}).get("agent_system_prompt")
+            or "",
         },
         "prompts": prompts,
         "models": models,
@@ -445,5 +473,7 @@ def dump_catalog(path: Path | None = None) -> Path:
     payload = build_inventory()
     # Strip live secrets-bearing config from the committed catalog
     payload.pop("config", None)
-    target.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8")
+    target.write_text(
+        json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8"
+    )
     return target

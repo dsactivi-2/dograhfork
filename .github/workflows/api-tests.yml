@@ -2,11 +2,12 @@ name: API tests
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, Guardian-Dograh, custom]
     paths:
       - "api/**"
       - "pipecat/**"
       - "scripts/**"
+      - "custom/**"
       - ".github/workflows/api-tests.yml"
 
 concurrency:

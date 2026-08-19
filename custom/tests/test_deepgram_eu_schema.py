@@ -1,8 +1,10 @@
+from pydantic import TypeAdapter
+
 from api.services.configuration.registry import (
     REGISTRY,
-    STTConfig,
     ServiceProviders,
     ServiceType,
+    STTConfig,
 )
 from custom.providers.deepgram_eu.schema import DeepgramEUSTTConfiguration
 
@@ -11,7 +13,10 @@ def test_us_deepgram_still_registered():
     keys = {getattr(k, "value", k) for k in REGISTRY[ServiceType.STT]}
     assert "deepgram" in keys
     assert "deepgram_eu" in keys
-    assert REGISTRY[ServiceType.STT][ServiceProviders.DEEPGRAM] is not DeepgramEUSTTConfiguration
+    assert (
+        REGISTRY[ServiceType.STT][ServiceProviders.DEEPGRAM]
+        is not DeepgramEUSTTConfiguration
+    )
 
 
 def test_deepgram_eu_schema_title():
@@ -20,7 +25,8 @@ def test_deepgram_eu_schema_title():
 
 
 def test_stt_union_accepts_both_providers():
-    eu = STTConfig.model_validate(
+    adapter = TypeAdapter(STTConfig)
+    eu = adapter.validate_python(
         {
             "provider": "deepgram_eu",
             "api_key": "k",
@@ -29,7 +35,7 @@ def test_stt_union_accepts_both_providers():
         }
     )
     assert eu.provider == ServiceProviders.DEEPGRAM_EU
-    us = STTConfig.model_validate(
+    us = adapter.validate_python(
         {
             "provider": "deepgram",
             "api_key": "k",
