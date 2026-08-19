@@ -12,6 +12,31 @@ DEFAULT_EU_HOST = "api.eu.deepgram.com"
 
 _FLUX_MODELS = {"flux-general-en", "flux-general-multi"}
 
+# Live-agent Listen flags for Deepgram 2/3 wrappers. Endpointing "on" is 100ms.
+LIVE_STT_DEFAULTS = {
+    "smart_format": True,
+    "interim_results": False,
+    "endpointing": True,
+    "endpointing_ms": 100,
+    "keyterm_prompting": True,
+    "diarize": True,
+    "punctuate": True,
+    "profanity_filter": False,
+    "redact": False,
+    "replace": True,
+}
+
+_LIVE_BOOL_KEYS = (
+    "smart_format",
+    "interim_results",
+    "keyterm_prompting",
+    "diarize",
+    "punctuate",
+    "profanity_filter",
+    "redact",
+    "replace",
+)
+
 
 def normalize_host(raw: str | None) -> str:
     value = (raw or "").strip()
@@ -36,6 +61,43 @@ def deepgram_inference_urls(*, force_host: str | None = None) -> dict[str, str]:
 
 def is_flux_model(model: str | None) -> bool:
     return (model or "") in _FLUX_MODELS
+
+
+def live_flag(stt, name: str):
+    return getattr(stt, name, LIVE_STT_DEFAULTS[name])
+
+
+def resolve_endpointing(stt) -> int | bool:
+    raw = getattr(stt, "endpointing", LIVE_STT_DEFAULTS["endpointing"])
+    if raw is True:
+        return LIVE_STT_DEFAULTS["endpointing_ms"]
+    if raw is False:
+        return False
+    if raw is None:
+        return LIVE_STT_DEFAULTS["endpointing_ms"]
+    return raw
+
+
+def live_stt_settings_kwargs(user_config, *, model: str, language: str, keyterms=None) -> dict:
+    """Pipecat DeepgramSTTSettings kwargs for the Deepgram 2/3 live profile."""
+    stt = user_config.stt
+    flags = {name: live_flag(stt, name) for name in _LIVE_BOOL_KEYS}
+    keyterm = (keyterms or []) if flags["keyterm_prompting"] else []
+    return {
+        "language": language,
+        "model": model,
+        "smart_format": flags["smart_format"],
+        "interim_results": flags["interim_results"],
+        "endpointing": resolve_endpointing(stt),
+        "diarize": flags["diarize"],
+        "punctuate": flags["punctuate"],
+        "profanity_filter": flags["profanity_filter"],
+        "keyterm": keyterm,
+        "extra": {
+            "redact": flags["redact"],
+            "replace": flags["replace"],
+        },
+    }
 
 
 def check_deepgram_management_key(api_key: str) -> bool:
