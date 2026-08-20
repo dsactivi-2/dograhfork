@@ -20,26 +20,12 @@ from pipecat.utils.text.base_text_filter import BaseTextFilter
 # Leading Fish S2 emotion / direction tag, e.g. [friendly] or [slightly sad]
 _LEADING_TAG = re.compile(r"^\s*\[[^\]]+\]")
 
-_ALLOWED_DEFAULTS = frozenset(
-    {
-        "friendly",
-        "empathetic",
-        "confident",
-        "calm",
-        "sad",
-        "happy",
-        "excited",
-        "nervous",
-        "neutral",
-    }
-)
-
 
 def _normalize_tag_name(raw: str | None, fallback: str = "friendly") -> str:
     name = (raw or fallback).strip().lower().strip("[]")
     if not name:
         return fallback
-    # Allow free-form S2 tags, but prefer known short names when empty junk slips in
+    # Allow free-form S2 tags; reject absurdly long junk
     if len(name) > 64:
         return fallback
     return name
@@ -55,7 +41,7 @@ class EmotionTextFilter(BaseTextFilter):
             also disables.
     """
 
-    def __init(
+    def __init__(
         self,
         *,
         default_tag: str | None = None,
