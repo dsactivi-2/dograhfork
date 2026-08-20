@@ -39,6 +39,8 @@ def test_create_fish_audio_uses_pcm_and_settings():
             speed=1.1,
             volume=2,
             normalize=True,
+            temperature=0.65,
+            top_p=0.8,
         )
     )
     with patch("custom.providers.fish_audio.factory.FishAudioTTSService") as mocked:
@@ -46,8 +48,11 @@ def test_create_fish_audio_uses_pcm_and_settings():
         kwargs = mocked.call_args.kwargs
         assert kwargs["output_format"] == "pcm"
         assert kwargs["sample_rate"] == 16000
-        assert kwargs["settings"].voice == "abc123voice"
-        assert kwargs["settings"].model == "s2.1-pro"
+        settings = kwargs["settings"]
+        assert settings.voice == "abc123voice"
+        assert settings.model == "s2.1-pro"
+        assert settings.temperature == 0.65
+        assert settings.top_p == 0.8
         filters = kwargs["text_filters"]
         assert len(filters) == 2
         assert isinstance(filters[0], XMLFunctionTagFilter)

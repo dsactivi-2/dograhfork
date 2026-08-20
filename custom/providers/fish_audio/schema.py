@@ -85,3 +85,22 @@ class FishAudioTTSConfiguration(BaseTTSConfiguration):
         default=True,
         description="Whether Fish Audio should normalize output audio levels.",
     )
+    temperature: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Sampling temperature for synthesis expressiveness (0.0–1.0). "
+            "Lower = more stable/consistent; higher = more varied. "
+            "Voice agents typically use 0.6–0.75."
+        ),
+    )
+    top_p: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Nucleus sampling top_p (0.0–1.0). Controls diversity of token "
+            "selection. Voice agents typically use 0.7–0.85."
+        ),
+    )

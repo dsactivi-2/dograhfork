@@ -27,7 +27,9 @@ def create_fish_audio_tts(user_config, audio_config):
     speed = getattr(user_config.tts, "speed", None)
     volume = getattr(user_config.tts, "volume", None)
     normalize = getattr(user_config.tts, "normalize", True)
-    # Optional overlay knobs (schema may omit them; getattr-safe)
+    temperature = getattr(user_config.tts, "temperature", None)
+    top_p = getattr(user_config.tts, "top_p", None)
+    # Optional overlay knobs (getattr-safe if older configs omit them)
     emotion_tag = getattr(user_config.tts, "emotion_default_tag", None)
     emotion_inject = getattr(user_config.tts, "emotion_inject", None)
     try:
@@ -45,6 +47,10 @@ def create_fish_audio_tts(user_config, audio_config):
         settings_kwargs["prosody_speed"] = speed
     if volume is not None:
         settings_kwargs["prosody_volume"] = volume
+    if temperature is not None:
+        settings_kwargs["temperature"] = temperature
+    if top_p is not None:
+        settings_kwargs["top_p"] = top_p
 
     emotion_filter = EmotionTextFilter(
         default_tag=emotion_tag if emotion_tag else "friendly",
