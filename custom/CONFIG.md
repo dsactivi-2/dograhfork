@@ -28,13 +28,31 @@ Keys nur in der Agent-Config. Kein `FISH_API_KEY` in der Shell.
 | --- | --- | --- |
 | `output_format` | `pcm` | kein MP3 |
 | `sample_rate` | Pipeline `transport_out_*` | WebRTC oft 16k, Telefon oft 8k |
-| `text_filters` | XML-Function-Tags raus | Tool-Calls nicht vorlesen |
+| `text_filters` | XML-Tags raus + **EmotionTextFilter** | Tool-Calls stumm; Default-Emotion-Tag wenn LLM keinen setzt |
 | `skip_aggregator_types` | `recording_router`, `recording` | Recording nicht als TTS-Text |
 | `silence_time_s` | `1.0` | Pause nach TTS |
 | `prosody_speed` / `prosody_volume` | aus `speed` / `volume` | Mapping UI → Fish |
 | ungültiges `latency` | → `balanced` | Fallback |
 
 PCM/WSS kommt automatisch. Nötig sind Key + Voice + gewünschtes Modell/Sprache.
+
+### Emotion-Tags (Lösung 1C — Safety Net)
+
+Fish S2 liest `[bracket]`-Tags im gesprochenen Text. Der Agent-Prompt soll sie setzen;
+die Factory hängt zusätzlich `EmotionTextFilter` an:
+
+- Fehlt ein führendes `[…]` → wird `[friendly]` vorangestellt (Default).
+- Ist schon ein Tag da (`[empathetic] …`) → unverändert.
+- Code: `custom/processors/emotion_text_filter.py`
+
+| Env / Attribut | Default | Wirkung |
+| --- | --- | --- |
+| `FISH_EMOTION_INJECT` | `1` | `0` / `false` schaltet den Injector aus |
+| `FISH_EMOTION_DEFAULT_TAG` | `friendly` | Tag-Name ohne Klammern |
+| `tts.emotion_inject` (optional) | an | per Agent-Config überschreiben |
+| `tts.emotion_default_tag` (optional) | `friendly` | per Agent-Config überschreiben |
+
+Prompt-Regeln bleiben sinnvoll (situative Tags). Der Filter ist nur die Absicherung.
 
 ## Deepgram STT
 
@@ -109,7 +127,9 @@ Official Deepgram-TTS bleibt US. Für EU-TTS **Deepgram EU** wählen.
 | `DEEPGRAM_BASE_URL` | Default Overlay `api.eu.deepgram.com` | nur `deepgram_2` / `deepgram_3` Inference |
 | Deepgram Key-Check | immer US `api.deepgram.com` | nur Validierung |
 | Neue-User-Defaults | STT=`deepgram`, TTS=ElevenLabs | nur frische Default-Configs — danach selbst auf 2/3 + Fish stellen |
-| Fish | kein `FISH_*` Env | Key nur in Agent-TTS |
+| Fish API-Key | kein `FISH_API_KEY` Env | Key nur in Agent-TTS |
+| `FISH_EMOTION_INJECT` | `1` | EmotionTextFilter an/aus |
+| `FISH_EMOTION_DEFAULT_TAG` | `friendly` | Default-Tag ohne Klammern |
 
 ## Typisch setzen
 
@@ -136,6 +156,6 @@ Official Deepgram-TTS bleibt US. Für EU-TTS **Deepgram EU** wählen.
 
 | | UI anfassen | Factory schon fest |
 | --- | --- | --- |
-| Fish | Key, Voice, Modell, Sprache, optional Prosody/Latency | PCM, Sample-Rate, Filter, Silence |
+| Fish | Key, Voice, Modell, Sprache, optional Prosody/Latency | PCM, Sample-Rate, XML-Filter, Emotion-Injector, Silence |
 | Deepgram STT | Provider 2/3, Key, Modell, Sprache, Live-Flags | EU-Host, Endpointing 100 ms, Format, Diarize, Keyterms |
 | Deepgram TTS | Key + Voice; EU = Provider `deepgram_eu` | Region-WS, Filter, Silence |
