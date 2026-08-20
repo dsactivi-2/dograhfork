@@ -21,6 +21,8 @@ Keys nur in der Agent-Config. Kein `FISH_API_KEY` in der Shell.
 | `speed` | `1.0` | nur wenn zu schnell/langsam |
 | `volume` | `0` | nur bei zu leise/laut |
 | `normalize` | `true` | meist lassen |
+| `temperature` | `0.7` (0.6–0.75) | Expressivität; niedriger = stabiler |
+| `top_p` | `0.7` (0.7–0.85) | Diversität der Synthese |
 
 ### Factory — fest, nicht in der UI
 
@@ -32,6 +34,7 @@ Keys nur in der Agent-Config. Kein `FISH_API_KEY` in der Shell.
 | `skip_aggregator_types` | `recording_router`, `recording` | Recording nicht als TTS-Text |
 | `silence_time_s` | `1.0` | Pause nach TTS |
 | `prosody_speed` / `prosody_volume` | aus `speed` / `volume` | Mapping UI → Fish |
+| `temperature` / `top_p` | aus UI (Default 0.7) | Sampling an FishAudioTTSSettings |
 | ungültiges `latency` | → `balanced` | Fallback |
 
 PCM/WSS kommt automatisch. Nötig sind Key + Voice + gewünschtes Modell/Sprache.
@@ -147,7 +150,9 @@ Official Deepgram-TTS bleibt US. Für EU-TTS **Deepgram EU** wählen.
     "model": "s2.1-pro",
     "voice": "<eure reference_id>",
     "language": "de",
-    "latency": "balanced"
+    "latency": "balanced",
+    "temperature": 0.7,
+    "top_p": 0.7
   }
 }
 ```
@@ -156,6 +161,6 @@ Official Deepgram-TTS bleibt US. Für EU-TTS **Deepgram EU** wählen.
 
 | | UI anfassen | Factory schon fest |
 | --- | --- | --- |
-| Fish | Key, Voice, Modell, Sprache, optional Prosody/Latency | PCM, Sample-Rate, XML-Filter, Emotion-Injector, Silence |
+| Fish | Key, Voice, Modell, Sprache, Prosody, Latency, **temperature/top_p** | PCM, Sample-Rate, XML-Filter, Emotion-Injector, Silence |
 | Deepgram STT | Provider 2/3, Key, Modell, Sprache, Live-Flags | EU-Host, Endpointing 100 ms, Format, Diarize, Keyterms |
 | Deepgram TTS | Key + Voice; EU = Provider `deepgram_eu` | Region-WS, Filter, Silence |
