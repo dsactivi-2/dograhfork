@@ -2,7 +2,6 @@
 
 from fastapi import HTTPException
 
-from custom.processors.emotion_text_filter import EmotionTextFilter
 from custom.providers.fish_audio.config import LATENCY_MODES
 from pipecat.services.fish.tts import FishAudioTTSService, FishAudioTTSSettings
 from pipecat.transcriptions.language import Language
@@ -29,9 +28,6 @@ def create_fish_audio_tts(user_config, audio_config):
     normalize = getattr(user_config.tts, "normalize", True)
     temperature = getattr(user_config.tts, "temperature", None)
     top_p = getattr(user_config.tts, "top_p", None)
-    # Optional overlay knobs (getattr-safe if older configs omit them)
-    emotion_tag = getattr(user_config.tts, "emotion_default_tag", None)
-    emotion_inject = getattr(user_config.tts, "emotion_inject", None)
     try:
         pipecat_language = Language(language_code)
     except ValueError:
@@ -52,11 +48,6 @@ def create_fish_audio_tts(user_config, audio_config):
     if top_p is not None:
         settings_kwargs["top_p"] = top_p
 
-    emotion_filter = EmotionTextFilter(
-        default_tag=emotion_tag if emotion_tag else "friendly",
-        enabled=True if emotion_inject is None else bool(emotion_inject),
-    )
-
     return FishAudioTTSService(
         api_key=user_config.tts.api_key,
         sample_rate=audio_config.transport_out_sample_rate,
@@ -64,7 +55,6 @@ def create_fish_audio_tts(user_config, audio_config):
         settings=FishAudioTTSSettings(**settings_kwargs),
         text_filters=[
             XMLFunctionTagFilter(),
-            emotion_filter,
         ],
         skip_aggregator_types=["recording_router", "recording"],
         silence_time_s=1.0,

@@ -12,7 +12,11 @@ services:
       - ./custom/guardian/state/runtime.env
     environment:
       DOGRAH_OVERLAY: "1"
-      DOGRAH_OVERLAY_VERSION: "0.3.0"
+      DOGRAH_OVERLAY_VERSION: "0.3.1"
+      # Explicit EU inference host (UI key is not the host).
+      DEEPGRAM_BASE_URL: "api.eu.deepgram.com"
+      # Do not inject Fish [emotion] tags into TTS text (spoken as words).
+      FISH_EMOTION_INJECT: "0"
     volumes:
       - ./custom:/app/custom:ro
 
