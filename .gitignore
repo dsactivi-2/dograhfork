@@ -27,3 +27,9 @@ node_modules/
 .superpowers/
 docs/superpowers/
 .gstack/
+
+# Guardian live state (config + history survive deploys, stay off git)
+custom/guardian/state/config.json
+custom/guardian/state/history.jsonl
+custom/guardian/state/snapshots/
+

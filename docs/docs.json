@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Dograh AI",
+  "name": "Dograh VoiceEU",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
@@ -30,11 +30,11 @@
           {
             "group": "Build your First Agent",
             "pages": [
-                  "getting-started/first-agent",
-                  "getting-started/trigger-calls-from-your-backend",
-                  "getting-started/send-call-data-with-webhooks",
-                  "getting-started/connect-telephony",
-                  "getting-started/add-tools-and-knowledge-base"
+              "getting-started/first-agent",
+              "getting-started/trigger-calls-from-your-backend",
+              "getting-started/send-call-data-with-webhooks",
+              "getting-started/connect-telephony",
+              "getting-started/add-tools-and-knowledge-base"
             ]
           },
           {
@@ -291,7 +291,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "https://github.com/dograh-hq/dograh/issues/new/choose"
+        "href": "https://github.com/dsactivi-2/dograhfork/issues/new/choose"
       }
     ],
     "primary": {
@@ -301,7 +301,7 @@
     }
   },
   "banner": {
-    "content": "🎉 **New: MCP Server & SDKs Released** — Drive Dograh from Claude, Cursor, or your own Python/TypeScript code. [MCP →](/integrations/mcp) · [SDKs →](/sdks/introduction)",
+    "content": "**VoiceEU overlay** — Deepgram EU (`api.eu.deepgram.com`) + Fish Audio TTS. Official Dograh updates stay mergeable via `custom/`.",
     "dismissible": true
   },
   "search": {
